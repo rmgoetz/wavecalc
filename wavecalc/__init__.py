@@ -1,1 +1,1 @@
-import wc_funcs
+import wavecalc.wc_funcs
