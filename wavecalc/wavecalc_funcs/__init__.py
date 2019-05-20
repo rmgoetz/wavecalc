@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy
-from math import pi
 
 
 
 
 def rotvec(vec,ang,axis=None):
-    
+    ''' Rotates vectors given as (3,) arrays around a specified axis: 'x', 'y', or 'z' '''
     ####################################################################################################
     #                                                                                                  #
     # The vector rotation function                                                                     #
@@ -17,13 +16,14 @@ def rotvec(vec,ang,axis=None):
     # axis - The axis about which the rotation is to be performed, either 'x', 'y', or 'z'.            #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs the rotated vector as a (3,1) array.                                                     #
+    # Outputs the rotated vector as a (3,) array.                                                     #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: May 20, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
+    pi = 3.141592653589793115997963468544185161590576171875
     angle = ang*pi/180
     if axis =='x':
         Ro = numpy.matrix([[1,0,0],
@@ -64,7 +64,7 @@ def rotvec(vec,ang,axis=None):
     
 
 def waveinterf(k,s,ep,k0,act=None,verbose=None):
-    
+    ''' Outputs reflection or transmission wave vectors as an array of (3,) arrays '''
     ####################################################################################################
     #                                                                                                  #
     # The wave interface function                                                                      #
@@ -83,7 +83,7 @@ def waveinterf(k,s,ep,k0,act=None,verbose=None):
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs either a (2,) or (4,) array of (3,1) arrays, corresponding to the output wave vectors.   #
+    # Outputs either a (2,) or (4,) array of (3,) arrays, corresponding to the output wave vectors.   #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: May 20, 2019                                                                       #
@@ -100,7 +100,6 @@ def waveinterf(k,s,ep,k0,act=None,verbose=None):
     ####################################################################################################
  
     snorm = numpy.sqrt(numpy.sum(s*s))
-    kstar = numpy.conj(k)
     S = s/snorm
     zp = S
     kdotS = numpy.sum(k*S)
@@ -113,7 +112,6 @@ def waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     xpa = k-kdotS*S
     xpastar = numpy.conj(xpa)
-    knorm = numpy.sqrt(numpy.real(numpy.sum(k*kstar)))
     xnorm = numpy.sqrt(numpy.real(numpy.sum(xpa*xpastar)))
     
     ### Handle when k and s are parallel ############################
