@@ -8,6 +8,8 @@ import warnings
 
 def __goodtest(ob):
     ''' A behind-the-scenes function for testing whether wavecalc objects have proper attributes '''
+    
+   
     ####################################################################################################
     #                                                                                                  #
     # The goodness test                                                                                #
@@ -31,19 +33,19 @@ def __goodtest(ob):
     ### Handle wave instances
     elif isinstance(ob,wavecalc.classes.wave):
         if ob.kvec is None or (str(type(ob.kvec)) == "<class 'numpy.ndarray'>" 
-                               and numpy.shape(ob.kvec) == (3,)):
+                               and numpy.shape(ob.kvec) == (3,1)):
             ktest = True
         else:
             ktest = False
         
         
         if ob.efield is None or (str(type(ob.efield)) == "<class 'numpy.ndarray'>" 
-                                 and numpy.shape(ob.efield) == (3,)):
+                                 and numpy.shape(ob.efield) == (3,1)):
             etest = True
         else:
             etest = False
         
-        if ob.medium is None or (str(type(ob.medium)) == "<class 'numpy.matrix'>" 
+        if ob.medium is None or (str(type(ob.medium)) == "<class 'numpy.ndarray'>" 
                                 and numpy.shape(ob.medium) == (3,3)):
             mtest = True
         else:
@@ -55,20 +57,20 @@ def __goodtest(ob):
     ### Handle surface instances
     elif isinstance(ob,wavecalc.classes.surface):
         if ob.normal is None or (str(type(ob.normal)) == "<class 'numpy.ndarray'>" 
-                                 and numpy.shape(ob.normal) == (3,)):
+                                 and numpy.shape(ob.normal) == (3,1)):
             ntest = True
         else:
             ntest = False
         
         
-        if ob.out is None or (str(type(ob.out)) == "<class 'numpy.matrix'>" 
+        if ob.out is None or (str(type(ob.out)) == "<class 'numpy.ndarray'>" 
                               and numpy.shape(ob.out) == (3,3)):
             otest = True
         else:
             otest = False
             
         
-        if ob.into is None or (str(type(ob.into)) == "<class 'numpy.matrix'>" 
+        if ob.into is None or (str(type(ob.into)) == "<class 'numpy.ndarray'>" 
                                and numpy.shape(ob.into) == (3,3)):
             itest = True
         else:
@@ -79,7 +81,7 @@ def __goodtest(ob):
             
     ### Handle media instances    
     elif isinstance(ob,wavecalc.classes.medium):
-        if ob.epsilon is None or (str(type(ob.epsilon)) == "<class 'numpy.matrix'>" 
+        if ob.epsilon is None or (str(type(ob.epsilon)) == "<class 'numpy.ndarray'>" 
                                   and numpy.shape(ob.epsilon) == (3,3)):
             eptest = True
         else:
@@ -95,6 +97,8 @@ def __goodtest(ob):
 
 def __rotmatrix(ang,axis=None):
     ''' A behind-the-scenes function for building rotation matrices '''
+    
+    
     ####################################################################################################
     #                                                                                                  #
     # The rotation matrix                                                                              #
@@ -121,15 +125,15 @@ def __rotmatrix(ang,axis=None):
     angle = ang*pi/180
     
     if axis == 'x':
-        return numpy.matrix([[1,0,0],
+        return numpy.array([[1,0,0],
                            [0,numpy.cos(angle),-numpy.sin(angle)],
                            [0,numpy.sin(angle),numpy.cos(angle)]])
     elif axis == 'y':
-        return numpy.matrix([[numpy.cos(angle),0,numpy.sin(angle)],
+        return numpy.array([[numpy.cos(angle),0,numpy.sin(angle)],
                             [0,1,0],
                             [-numpy.sin(angle),0,numpy.cos(angle)]])
     elif axis == 'z':
-        return numpy.matrix([[numpy.cos(angle),-numpy.sin(angle),0],
+        return numpy.array([[numpy.cos(angle),-numpy.sin(angle),0],
                             [numpy.sin(angle),numpy.cos(angle),0],
                             [0,0,1]])
     else:
@@ -141,6 +145,8 @@ def __rotmatrix(ang,axis=None):
 
 def __rotvec(vec,ang,axis=None):
     ''' A behind-the-scenes function to rotate vectors around a specified axis: 'x', 'y', or 'z' '''
+    
+    
     ####################################################################################################
     #                                                                                                  #
     # The vector rotation function                                                                     #
@@ -159,9 +165,7 @@ def __rotvec(vec,ang,axis=None):
     ####################################################################################################
     
     Ro = __rotmatrix(ang,axis)
-    mvec = numpy.asmatrix(vec).T
-    rot = Ro*mvec
-    sol = numpy.asarray(rot.T)[0]
+    sol = Ro @ vec
     return sol
     
 
@@ -171,17 +175,19 @@ def __rotvec(vec,ang,axis=None):
 
 def __rottens(tens,ang,axis=None):
     ''' A behind-the-scenes function to rotate tensors around a specified axis: 'x', 'y', or 'z' '''
+    
+    
     ####################################################################################################
     #                                                                                                  #
-    # The tensor (matrix) rotation function                                                                     #
+    # The tensor (matrix) rotation function                                                            #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    # tens - The input tensor to be rotated, given as a (3,3) numpy matrix.                            #
+    # tens - The input tensor to be rotated, given as a (3,3) numpy array.                             #
     #  ang - The angle of rotation in degrees, given as an int or a float.                             #
     # axis - The axis about which the rotation is to be performed, either 'x', 'y', or 'z'.            #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs the rotated tensor as a (3,3) numpy matrix.                                                      #
+    # Outputs the rotated tensor as a (3,3) numpy array.                                               #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: May 21, 2019                                                                       #
@@ -189,7 +195,7 @@ def __rottens(tens,ang,axis=None):
     ####################################################################################################
     Rinv = __rotmatrix(-ang,axis)
     Ro = __rotmatrix(ang,axis)
-    sol = Ro*tens*Rinv
+    sol = Ro @ tens @ Rinv
     return sol
     
     
@@ -199,6 +205,8 @@ def __rottens(tens,ang,axis=None):
     
 def rotate(ob,ang,axis=None,medmove=None):
     ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' '''
+    
+    
     ####################################################################################################
     #                                                                                                  #
     # The rotation function for wavecalc object classes.                                               #
@@ -231,11 +239,11 @@ def rotate(ob,ang,axis=None,medmove=None):
         medmove = None
         
     ### Handle (3,) numpy arrays
-    if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,):
+    if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,1):
         ob = __rotvec(ob,ang,axis)
         
-    ### Handle (3,3) numpy matrices
-    if isinstance(ob,numpy.matrix) and numpy.shape(ob) == (3,3):
+    ### Handle (3,3) numpy arrays
+    if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,3):
         ob = __rottens(ob,ang,axis)
         
         
@@ -289,23 +297,25 @@ def rotate(ob,ang,axis=None,medmove=None):
     
     ### Handle unsupported object instances
     else:
-        raise Exception("Argument 'ob' must be a (3,1) numpy array, (3,3) numpy matrix, or a wavecalc wave, surface, or medium")
+        raise Exception("Argument 'ob' must be a (3,1) numpy array, (3,3) numpy array, or a wavecalc wave, surface, or medium")
     
     
     
     
 
 def __waveinterf(k,s,ep,k0,act=None,verbose=None):
-    ''' Outputs reflection or transmission wave vectors as an array of (3,) arrays '''
+    ''' Outputs reflection or transmission wave vectors as an array of (3,1) arrays '''
+    
+    
     ####################################################################################################
     #                                                                                                  #
     # The wave interface function                                                                      #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #       k - The input wave vector, given as a (3,) array.                                          #
-    #       s - The surface normal vector which defines interface surface, given as a (3,) array.      #
+    #       k - The input wave vector, given as a (3,1) array.                                         #
+    #       s - The surface normal vector which defines interface surface, given as a (3,1) array.     #
     #      ep - The dielectric tensor of either the reflection or transmission medium, given as a      #
-    #           (3,3) numpy matrix.                                                                    # 
+    #           (3,3) numpy array.                                                                     # 
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
     #           as an int or a float.                                                                  #
     #     act - The action of interest, either a reflection denoted by setting the variable to 'refl', #
@@ -315,7 +325,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs either a (2,) or (4,) array of (3,) arrays, corresponding to the output wave vectors.    #
+    # Outputs either a (2,) or (4,) array of (3,1) arrays, corresponding to the output wave vectors.   #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: May 20, 2019                                                                       #
@@ -331,20 +341,22 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     ####################################################################################################
     ####################################################################################################
  
-    snorm = numpy.sqrt(numpy.sum(s*s))
+    snorm = numpy.sqrt((s.T @ s)[0,0])
     S = s/snorm
     zp = S
-    kdotS = numpy.sum(k*S)
+    kdotS = (k.T @ s)[0,0] #numpy.sum(k*S)
+    kstar = numpy.conj(k)
+    knorm = numpy.sqrt((kstar.T @ k)[0,0].real)
     
     ### Check if the wave is incident on the surface #############
     if kdotS<=0:
-        str1 = 'Error: Wave vector is not incident on interface '
+        str1 = 'Error: Wave vector is not incident on interface'
         return print(str1)
     ##############################################################
     
     xpa = k-kdotS*S
     xpastar = numpy.conj(xpa)
-    xnorm = numpy.sqrt(numpy.sum(xpa*xpastar).real)
+    xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)#numpy.sqrt(numpy.sum(xpa*xpastar).real)
     
     ### Handle when k and s are parallel ############################
     if xnorm<1e-14:
@@ -353,16 +365,16 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
             ### Case where 1 is zero:
             if len(numpy.where(zp<1e-14)[0])==0:
                 goods = numpy.where(zp>1e-14)[0]
-                xpa = numpy.zeros([3])
-                xpa[goods[0]] = -zp[goods[1]]/zp[goods[2]]
+                xpa = numpy.zeros([3,1])
+                xpa[goods[0]] = -zp[goods[1]]/zp[goods[0]]
                 xpa[goods[1]] = 1
                 xpastar = numpy.conj(xpa)
-                newnorm = numpy.sqrt(numpy.sum(xpa*xpastar).real)
+                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   #numpy.sqrt(numpy.sum(xpa*xpastar).real)
                 xp = xpa/newnorm
             ### Other case is 2 are zero (all three can't be zero):
             else:
                 good = numpy.where(zp<1e-14)[0]
-                xpa = numpy.zeros([3])
+                xpa = numpy.zeros([3,1])
                 xpa[good[0]] = 1
                 xp = xpa
                 
@@ -372,17 +384,14 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
         xp=xpa/xnorm
         
         
-    yp = numpy.cross(zp,xp)
-    U = numpy.matrix([[xp[0],yp[0],zp[0]],[xp[1],yp[1],zp[1]],[xp[2],yp[2],zp[2]]])
-    Uin = numpy.linalg.inv(U)
-    kpa = Uin*(numpy.asmatrix(k).T)
+    yp = numpy.cross(zp.T,xp.T).T
+    U = numpy.array([[xp[0,0],yp[0,0],zp[0,0]],[xp[1,0],yp[1,0],zp[1,0]],[xp[2,0],yp[2,0],zp[2,0]]])
+    Uinv = numpy.linalg.inv(U)
+    kp = Uinv @ k
     
-    ### The transformed k array ##########
-    kp = numpy.asarray(kpa.T)[0]
-    ######################################
     
     ### The transformed dielectric tensor ###
-    epp = Uin*ep*U
+    epp = Uinv @ ep @ U
     #########################################
     
     ####################################################################################################
@@ -391,14 +400,14 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     if verbose==True:
         #print('k=',k)
-        print('k . S =',kdotS)
+        print('k_hat . s_hat =',kdotS/knorm)
         #print('S=',S)
-        print("k' =",kp)
+        print("k.T' =",kp.T)
         #print('xnorm=',xnorm)
         #print('xpa=',xpa)
-        print("x' =",xp)
-        print("y' =",yp)
-        print("z' =",zp)
+        print("x.T' =",xp.T)
+        print("y.T' =",yp.T)
+        print("z.T' =",zp.T)
         print('U =',U)
     
     
@@ -411,11 +420,11 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     ### Normalize the k components
     #norm = np.sqrt(kp[0]**2+kp[1]**2+kp[2]**2)
-    kx = kp[0]/k0
+    kx = kp[0,0]/k0
     ###
     
     ### Compute the minors of epsilon in the solution coordinates
-    M = numpy.asmatrix(numpy.zeros([3,3]),dtype=complex)
+    M = numpy.zeros([3,3],dtype=complex)
     for i in range(3):
         for j in range(3):
             minora = numpy.delete(epp,i,axis=0)
@@ -424,7 +433,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     ###
     
     ### Some convenient quantities to calculate
-    ID = numpy.matrix([[1,0,0],[0,1,0],[0,0,1]])
+    ID = numpy.array([[1,0,0],[0,1,0],[0,0,1]])
     detep = epp[0,0]*M[0,0]-epp[0,1]*M[0,1]+epp[0,2]*M[0,2]
     sig = epp+epp.T
     delt = (epp[0,0]+epp[1,1]+epp[2,2])*ID-epp
@@ -436,6 +445,14 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     PSI = (kx**3)*sig[0,2]+kx*(M[0,2]+M[2,0])
     GAMMA = (kx**4)*epp[0,0]-(kx**2)*(M[1,1]+M[2,2])+detep
     ###
+    
+    if verbose==True:
+        print('DELTA =',DELTA)
+        print("SIGMA =",SIGMA)
+        print("PSI =",PSI)
+        print("GAMMA =",GAMMA)
+    
+    
     
     ### Roots of the quartic
     kzs = numpy.roots([epp[2,2],DELTA,SIGMA,PSI,GAMMA])
@@ -450,21 +467,18 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     
     ### The four (normalized) solution wave vectors in solver coordinates
-    kbdp = numpy.array([kx,0,kzs[0]])
-    kadp = numpy.array([kx,0,kzs[1]])
-    kaup = numpy.array([kx,0,kzs[2]])
-    kbup = numpy.array([kx,0,kzs[3]])
+    kbdp = numpy.array([[kx,0,kzs[0]]])
+    kadp = numpy.array([[kx,0,kzs[1]]])
+    kaup = numpy.array([[kx,0,kzs[2]]])
+    kbup = numpy.array([[kx,0,kzs[3]]])
     ###
     
     ### Transform the solutions back to lab coordinates
-    kbdm = U* (numpy.asmatrix(kbdp).T)
-    kadm = U* (numpy.asmatrix(kadp).T)
-    kaum = U* (numpy.asmatrix(kaup).T)
-    kbum = U* (numpy.asmatrix(kbup).T)
-    kbd = numpy.asarray(kbdm.T)[0]
-    kad = numpy.asarray(kadm.T)[0]
-    kau = numpy.asarray(kaum.T)[0]
-    kbu = numpy.asarray(kbum.T)[0]
+    kbd = U @ kbdp.T
+    kad = U @ kadp.T #* (numpy.asmatrix(kadp).T)
+    kau = U @ kaup.T
+    kbu = U @ kbup.T
+
     kaustar = numpy.conj(kau)
     kadstar = numpy.conj(kad)
     kbustar = numpy.conj(kbu)
@@ -476,10 +490,10 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     transs = numpy.array([kau,kbu])*k0
     
     ### Calculate effective indices of refraction
-    aunorm = numpy.sqrt(numpy.sum(kau*kaustar).real)
-    adnorm = numpy.sqrt(numpy.sum(kad*kadstar).real)
-    bunorm = numpy.sqrt(numpy.sum(kbu*kbustar).real)
-    bdnorm = numpy.sqrt(numpy.sum(kbd*kbdstar).real)
+    aunorm = numpy.sqrt((kaustar.T @ kau)[0,0].real)    # numpy.sqrt(numpy.sum(kau*kaustar).real)   # numpy.sqrt((xpastar.T @ xpa)[0,0].real)
+    adnorm = numpy.sqrt((kadstar.T @ kad)[0,0].real)
+    bunorm = numpy.sqrt((kbustar.T @ kbu)[0,0].real)
+    bdnorm = numpy.sqrt((kbdstar.T @ kbd)[0,0].real)
     
     nau = aunorm/k0
     nad = adnorm/k0
@@ -511,6 +525,8 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
 
 def reflect(wav,surf,med=None,verbose=None,k0=None,HR=None):
     ''' Outputs reflection waves '''
+    
+     
     ####################################################################################################
     #                                                                                                  #
     # The wave interface function                                                                      #
