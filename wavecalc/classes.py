@@ -7,6 +7,7 @@ Created on Mon May 20 23:14:02 2019
 import wavecalc
 import numpy
 from numpy import random
+#import wavecalc.functions as fun   # for when we define wave + surface
 
 
 class wave:
@@ -65,6 +66,14 @@ class wave:
             
         else:
             raise Exception('Must specify medium as a (3,3) numpy.ndarray')
+            
+            
+    def __neg__(self):
+        if (isinstance(self.kvec,numpy.ndarray) 
+            and numpy.shape(self.kvec) == (3,1)):
+            return wave(kvec=-self.kvec,efield=self.efield,medium=self.medium)
+        else:
+            raise Exception("Wave must have a properly formed kvec to be negated")
 
         
         
@@ -139,6 +148,8 @@ class surface:
                 return wavecalc.classes.surface(normal=self.normal,into=other.epsilon,out=self.out)
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
+        elif isinstance(other,wavecalc.classes.wave):
+            ''' Do the interaction '''
         else:
             raise Exception('Surfaces can only be added to media')
        
@@ -151,8 +162,23 @@ class surface:
                 return wavecalc.classes.surface(normal=self.normal,into=self.into,out=other.epsilon)
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
+        elif isinstance(other,wavecalc.classes.wave):
+            ''' Do the interaction '''
         else:
-            raise Exception('Surfaces can only subtract media')
+            raise Exception('Surfaces can only subtract waves or media')
+            
+    
+    def __neg__(self):
+        if (isinstance(self.normal,numpy.ndarray) 
+            and numpy.shape(self.normal) == (3,1)):
+            return surface(normal=-self.normal,into=self.into,out=self.out)
+        else:
+            raise Exception("Surface must have a ")
+            
+    
+    
+    def __invert__(self):
+        return surface(normal=self.normal,into=self.out,out=self.into)
             
 class medium:
     ''' A class for dielectric media '''
