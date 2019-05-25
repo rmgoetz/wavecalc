@@ -5,9 +5,10 @@ Created on Mon May 20 23:14:02 2019
 @author: Ryan
 """
 import wavecalc
+#from wavecalc import functions
 import numpy
 from numpy import random
-#import wavecalc.functions as fun   # for when we define wave + surface
+import wavecalc.functions as fun   # for when we define wave + surface
 
 
 class wave:
@@ -15,7 +16,7 @@ class wave:
     def __init__(self,kvec=None,efield=None,medium=None):
         
         if kvec is None:
-            self.kvec = numpy.array([[0,0,1]]).T
+            self.kvec = numpy.array([[0.,0.,1.]]).T
        
         elif str(type(kvec)) == "<class 'numpy.ndarray'>" and numpy.shape(kvec) == (3,1):
             self.kvec = kvec
@@ -33,7 +34,7 @@ class wave:
         
         
         if efield is None:
-            self.efield = numpy.array([[1,0,0]]).T
+            self.efield = numpy.array([[1.,0.,0.]]).T
         
         elif str(type(efield)) == "<class 'numpy.ndarray'>" and numpy.shape(efield) == (3,1):
             self.efield = efield
@@ -51,9 +52,9 @@ class wave:
         
         
         if medium is None:
-            self.medium = numpy.array([[1,0,0],
-                                       [0,1,0],
-                                       [0,0,1]])
+            self.medium = numpy.array([[1.,0.,0.],
+                                       [0.,1.,0.],
+                                       [0.,0.,1.]])
     
         elif str(type(medium)) == "<class 'numpy.ndarray'>" and numpy.shape(medium) == (3,3):
             self.medium = medium
@@ -66,6 +67,25 @@ class wave:
             
         else:
             raise Exception('Must specify medium as a (3,3) numpy.ndarray')
+            
+            
+            
+            
+    def __add__(self,other):
+        if isinstance(other,wavecalc.classes.medium):
+            self.medium = other.epsilon
+        elif isinstance(other,wavecalc.classes.surface):
+            return fun.reflect(self,other)
+        else:
+            raise Exception("Waves can only add with media or surfaces")
+    
+        
+        
+    def __sub__(self,other):
+        if isinstance(other,wavecalc.classes.surface):
+            return fun.transmit(self,other)
+        else:
+            raise Exception("Waves can only subtract surfaces")
             
             
     def __neg__(self):
@@ -81,12 +101,19 @@ class wave:
         return print('Need to add a Poynting attribute')
 
 
+
+    def rotate(self,ang,axis=None,medmove=None):
+        self = fun.rotate(self,ang,axis,medmove)
+        return self
+
+
+
 class surface:
     ''' A class for planar interfaces '''
     def __init__(self,normal=None,into=None,out=None):
         
         if normal is None:
-            self.normal = numpy.array([[0,0,1]]).T
+            self.normal = numpy.array([[0.,0.,1.]]).T
         
         elif str(type(normal)) == "<class 'numpy.ndarray'>" and numpy.shape(normal) == (3,1):
             self.normal = normal
@@ -104,9 +131,9 @@ class surface:
         
         
         if into is None:
-            self.into = numpy.array([[1,0,0],
-                                     [0,1,0],
-                                     [0,0,1]])
+            self.into = numpy.array([[1.,0.,0.],
+                                     [0.,1.,0],
+                                     [0.,0.,1.]])
         
         elif str(type(into)) == "<class 'numpy.ndarray'>" and numpy.shape(into) == (3,3):
             self.into = into
@@ -124,9 +151,9 @@ class surface:
         
         
         if out is None:
-            self.out = numpy.array([[1,0,0],
-                                    [0,1,0],
-                                    [0,0,1]])
+            self.out = numpy.array([[1.,0.,0.],
+                                    [0.,1.,0.],
+                                    [0.,0.,1.]])
         
         elif str(type(out)) == "<class 'numpy.ndarray'>" and numpy.shape(out) == (3,3):
             self.out = out
@@ -149,9 +176,9 @@ class surface:
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
         elif isinstance(other,wavecalc.classes.wave):
-            ''' Do the interaction '''
+            return fun.transmit(other,self)
         else:
-            raise Exception('Surfaces can only be added to media')
+            raise Exception('Surfaces can only add media or waves')
        
         
         
@@ -163,7 +190,7 @@ class surface:
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
         elif isinstance(other,wavecalc.classes.wave):
-            ''' Do the interaction '''
+            return fun.reflect(other,self)
         else:
             raise Exception('Surfaces can only subtract waves or media')
             
@@ -179,14 +206,28 @@ class surface:
     
     def __invert__(self):
         return surface(normal=self.normal,into=self.out,out=self.into)
+    
+    
+    
+    def rotate(self,ang,axis=None,medmove=None):
+        self = fun.rotate(self,ang,axis,medmove)
+        return self
             
+        
+        
+        
+        
+        
+        
+        
+        
 class medium:
     ''' A class for dielectric media '''
     def __init__(self,epsilon=None):
         if epsilon is None:
-            self.epsilon = numpy.array([[1,0,0],
-                                        [0,1,0],
-                                        [0,0,1]])
+            self.epsilon = numpy.array([[1.,0.,0.],
+                                        [0.,1.,0.],
+                                        [0.,0.,1.]])
         elif str(type(epsilon)) == "<class 'numpy.ndarray'>" and numpy.shape(epsilon) == (3,3):
             self.epsilon = epsilon
         elif epsilon == 'random':
@@ -195,7 +236,53 @@ class medium:
             self.epsilon = None
         else:
             raise Exception('Must specify epsilon as a (3,3) numpy.ndarray')
-            
+    
+
+    def epx(self,epsilon_xx):
+        if (not isinstance(self.epsilon,numpy.ndarray) 
+            or not numpy.shape(self.epsilon)==(3,3)):
+            raise Exception("Medium must have proper epsilon attribute")
+        if (isinstance(epsilon_xx,int) 
+            or isinstance(epsilon_xx,float) 
+            or isinstance(epsilon_xx,complex)):
+            self.epsilon[0,0] = epsilon_xx
+        else:
+            raise Exception("Epsilon_xx must be an int, float, or complex")
+
+
+
+    def epy(self,epsilon_yy):
+        if (not isinstance(self.epsilon,numpy.ndarray) 
+            or not numpy.shape(self.epsilon)==(3,3)):
+            raise Exception("Medium must have proper epsilon attribute")
+        if (isinstance(epsilon_yy,int) 
+            or isinstance(epsilon_yy,float) 
+            or isinstance(epsilon_yy,complex)):
+            self.epsilon[1,1] = epsilon_yy
+        else:
+            raise Exception("Epsilon_yy must be an int, float, or complex")
+
+
+
+    def epz(self,epsilon_zz):
+        if (not isinstance(self.epsilon,numpy.ndarray) 
+            or not numpy.shape(self.epsilon)==(3,3)):
+            raise Exception("Medium must have proper epsilon attribute")
+        if (isinstance(epsilon_zz,int) 
+            or isinstance(epsilon_zz,float) 
+            or isinstance(epsilon_zz,complex)):
+            self.epsilon[2,2] = epsilon_zz
+        else:
+            raise Exception("Epsilon_zz must be an int, float, or complex")
+
+
+
+
+
+
+
+
+        
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
             if (isinstance(self.epsilon,numpy.ndarray)
@@ -229,6 +316,12 @@ class medium:
             raise Exception('Cannot add a medium to a non-medium')
         
                 
+    def rotate(self,ang,axis=None,medmove=None):
+        self = fun.rotate(self,ang,axis,medmove)
+        return self
+
+    
+
             
         
         
