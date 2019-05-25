@@ -8,7 +8,10 @@ import wavecalc
 #from wavecalc import functions
 import numpy
 from numpy import random
-import wavecalc.functions as fun   # for when we define wave + surface
+from wavecalc.functions import rotate_copy as rotate_copy
+from wavecalc.functions import transmit as transmit
+from wavecalc.functions import reflect as reflect
+#import wavecalc.functions as fun   # for when we define wave + surface
 
 
 class wave:
@@ -75,7 +78,7 @@ class wave:
         if isinstance(other,wavecalc.classes.medium):
             self.medium = other.epsilon
         elif isinstance(other,wavecalc.classes.surface):
-            return fun.reflect(self,other)
+            return reflect(self,other)
         else:
             raise Exception("Waves can only add with media or surfaces")
     
@@ -83,7 +86,7 @@ class wave:
         
     def __sub__(self,other):
         if isinstance(other,wavecalc.classes.surface):
-            return fun.transmit(self,other)
+            return transmit(self,other)
         else:
             raise Exception("Waves can only subtract surfaces")
             
@@ -102,9 +105,8 @@ class wave:
 
 
 
-    def rotate(self,ang,axis=None,medmove=None):
-        self = fun.rotate(self,ang,axis,medmove)
-        return self
+    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+        rotate_copy(self,ang,axis,medmove,verbose)
 
 
 
@@ -172,11 +174,11 @@ class surface:
         if isinstance(other,wavecalc.classes.medium):
             if (isinstance(other.epsilon,numpy.ndarray)
                 and numpy.shape(other.epsilon) == (3,3)):
-                return wavecalc.classes.surface(normal=self.normal,into=other.epsilon,out=self.out)
+                return surface(normal=self.normal,into=other.epsilon,out=self.out)
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
         elif isinstance(other,wavecalc.classes.wave):
-            return fun.transmit(other,self)
+            return transmit(other,self)
         else:
             raise Exception('Surfaces can only add media or waves')
        
@@ -186,11 +188,11 @@ class surface:
         if isinstance(other,wavecalc.classes.medium):
             if (isinstance(other.epsilon,numpy.ndarray)
                 and numpy.shape(other.epsilon) == (3,3)):
-                return wavecalc.classes.surface(normal=self.normal,into=self.into,out=other.epsilon)
+                return surface(normal=self.normal,into=self.into,out=other.epsilon)
             else:
                 raise Exception('Medium must have a properly defined dieletric tensor')
         elif isinstance(other,wavecalc.classes.wave):
-            return fun.reflect(other,self)
+            return reflect(other,self)
         else:
             raise Exception('Surfaces can only subtract waves or media')
             
@@ -209,9 +211,9 @@ class surface:
     
     
     
-    def rotate(self,ang,axis=None,medmove=None):
-        self = fun.rotate(self,ang,axis,medmove)
-        return self
+    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+        rotate_copy(self,ang,axis,medmove,verbose)
+        
             
         
         
@@ -289,13 +291,13 @@ class medium:
                 and isinstance(other.epsilon,numpy.ndarray) 
                 and numpy.shape(other.epsilon) == (3,3)
                 and numpy.shape(self.epsilon) == (3,3)):
-                return wavecalc.classes.surface(out=self.epsilon,into=other.epsilon)
+                return surface(out=self.epsilon,into=other.epsilon)
             else:
                 raise Exception('Both media must have properly defined dielectric tensors')
         elif (isinstance(other,wavecalc.classes.surface) 
               and isinstance(self.epsilon,numpy.ndarray) 
               and numpy.shape(self.epsilon) == (3,3)):
-            return wavecalc.classes.surface(normal=other.normal,into=other.into,out=self.epsilon)
+            return surface(normal=other.normal,into=other.into,out=self.epsilon)
         else:
             raise Exception('Cannot add a medium to a non-medium')
             
@@ -305,20 +307,20 @@ class medium:
                 and isinstance(other.epsilon,numpy.ndarray) 
                 and numpy.shape(other.epsilon) == (3,3)
                 and numpy.shape(self.epsilon) == (3,3)):
-                return wavecalc.classes.surface(out=other.epsilon,into=self.epsilon)
+                return surface(out=other.epsilon,into=self.epsilon)
             else:
                 raise Exception('Both media must have defined dielectric tensors')
         elif (isinstance(other,wavecalc.classes.surface) 
                 and isinstance(self.epsilon,numpy.ndarray) 
                 and numpy.shape(self.epsilon) == (3,3)):
-            return wavecalc.classes.surface(normal=other.normal,into=self.epsilon,out=other.out)
+            return surface(normal=other.normal,into=self.epsilon,out=other.out)
         else:
             raise Exception('Cannot add a medium to a non-medium')
         
                 
-    def rotate(self,ang,axis=None,medmove=None):
-        self = fun.rotate(self,ang,axis,medmove)
-        return self
+    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+        rotate_copy(self,ang,axis,medmove,verbose)
+        
 
     
 

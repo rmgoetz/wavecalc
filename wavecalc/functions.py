@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 import wavecalc
-import warnings
+#import warnings
 #from wavecalc import classes
 
 
@@ -155,7 +155,7 @@ def __ferrari(coeffs):
     #                                                                                                  #
     ####################################################################################################
     
-    return print("Not sure how to implement this yet")
+    return print("Not if this is necessary yet")
     
     
 
@@ -217,12 +217,12 @@ def __rotvec(vec,ang,axis=None):
     # The vector rotation function                                                                     #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #  vec - The input vector to be rotated, given as a (3,) array.                                    #
+    #  vec - The input vector to be rotated, given as a (3,1) array.                                   #
     #  ang - The angle of rotation in degrees, given as an int or a float.                             #
     # axis - The axis about which the rotation is to be performed, either 'x', 'y', or 'z'.            #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs the rotated vector as a (3,) numpy array.                                                #
+    # Outputs the rotated vector as a (3,1) numpy array.                                               #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: May 21, 2019                                                                       #
@@ -268,7 +268,7 @@ def __rottens(tens,ang,axis=None):
     
     
     
-def rotate(ob,ang,axis=None,medmove=None):
+def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' '''
     
     
@@ -285,22 +285,23 @@ def rotate(ob,ang,axis=None,medmove=None):
     #           For surfaces: if set to 'into' only the into medium is rotated with the surface, and   #
     #           similarly for 'out'; if set to 'onlyinto' or 'onlyout', these media are rotated while  #
     #           the surface normal remains fixed.                                                      #
+    # verbose - If set to True, prints some information about the calculation.                         #
     #                                                                                                  #
     #                                                                                                  #
-    # Rotates the object in accordance with its transformation properties.                             #
+    # Returns the rotated object in accordance with its transformation properties.                     #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 21, 2019                                                                       #
+    # Last Updated: May 25, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
     ### Raise exception for invalid 'medmove' settings
     medmove_opts = set([None,'with','only','onlyinto','onlyout','into','out'])
     if medmove not in medmove_opts:
-        str1 ="If specified, 'medmove' must be set to one of the following: \n"
-        str2 = " 'with', 'only', 'into', 'out', 'onlyinto', 'onlyout' "
+        str1 = "If specified, 'medmove' must be set to one of the following: \n"
+        str2 = "'with', 'only', 'into', 'out', 'onlyinto', 'onlyout' \n "
         str3 = " Variable 'medmove' will be set to None for following calculation. "
-        warnings.warn(str1+str2+str3,stacklevel=1)
+        print(str1+str2+str3)
         medmove = None
         
     ### Handle (3,) numpy arrays
@@ -319,7 +320,7 @@ def rotate(ob,ang,axis=None,medmove=None):
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
-            warnings.warn(str1+str2,stacklevel=1)
+            print(str1+str2)
             medmove = None
         if medmove == 'only':
             kk = ob.kvec
@@ -330,7 +331,11 @@ def rotate(ob,ang,axis=None,medmove=None):
             ee = __rotvec(ob.efield,ang,axis)
             mm = ob.medium
             if medmove == 'with':
-                ob.medium = __rottens(ob.medium,ang,axis)
+                mm = __rottens(ob.medium,ang,axis)
+        if verbose == True:
+            print('New kvec :',kk)
+            print('New efield :',ee)
+            print('New medium :',mm)
         return wavecalc.classes.wave(kvec=kk,efield=ee,medium=mm)
     
     ### Handle surface instances
@@ -356,6 +361,10 @@ def rotate(ob,ang,axis=None,medmove=None):
                 oo = __rottens(ob.out,ang,axis)
             elif medmove == 'into':
                 ii = __rottens(ob.into,ang,axis)
+        if verbose == True:
+            print('New normal :',nn)
+            print('New out :',ii)
+            print('New int :',oo)
         return wavecalc.classes.surface(normal=nn,into=ii,out=oo)
        
     ### Handle medium instances        
@@ -365,8 +374,10 @@ def rotate(ob,ang,axis=None,medmove=None):
         if medmove not in set([None]):
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
-            warnings.warn(str1+str2,stacklevel=1)
+            print(str1+str2)
         ee = __rottens(ob.epsilon,ang,axis)
+        if verbose == True:
+            print('epsilon :',ee)
         return wavecalc.classes.medium(epsilon=ee)
     
     ### Handle unsupported object instances
@@ -402,7 +413,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     # Outputs either a (2,) or (4,) array of (3,1) arrays, corresponding to the output wave vectors.   #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 20, 2019                                                                       #
+    # Last Updated: May 24, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
@@ -418,7 +429,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     snorm = numpy.sqrt((s.T @ s)[0,0])
     S = s/snorm
     zp = S
-    kdotS = (k.T @ s)[0,0] #numpy.sum(k*S)
+    kdotS = (k.T @ s)[0,0] 
     kstar = numpy.conj(k)
     knorm = numpy.sqrt((kstar.T @ k)[0,0].real)
     
@@ -430,7 +441,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     xpa = k-kdotS*S
     xpastar = numpy.conj(xpa)
-    xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)#numpy.sqrt(numpy.sum(xpa*xpastar).real)
+    xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)
     
     ### Handle when k and s are parallel ############################
     if xnorm<1e-14:
@@ -443,7 +454,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
                 xpa[goods[0]] = -zp[goods[1]]/zp[goods[0]]
                 xpa[goods[1]] = 1
                 xpastar = numpy.conj(xpa)
-                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   #numpy.sqrt(numpy.sum(xpa*xpastar).real)
+                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   
                 xp = xpa/newnorm
             ### Other case is 2 are zero (all three can't be zero):
             else:
@@ -473,12 +484,8 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     ####################################################################################################
     
     if verbose==True:
-        #print('k=',k)
         print('k_hat . s_hat =',kdotS/knorm)
-        #print('S=',S)
         print("k.T' =",kp.T)
-        #print('xnorm=',xnorm)
-        #print('xpa=',xpa)
         print("x.T' =",xp.T)
         print("y.T' =",yp.T)
         print("z.T' =",zp.T)
@@ -529,16 +536,15 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     
     
     ### Roots of the quartic
-    #kzs = numpy.roots([epp[2,2],DELTA,SIGMA,PSI,GAMMA])
-    #coeffs_high_to_low = [epp[2,2],DELTA,SIGMA,PSI,GAMMA]
     coeffs_low_to_high = [GAMMA,PSI,SIGMA,DELTA,epp[2,2]]
     kzs = numpy.polynomial.polynomial.polyroots(coeffs_low_to_high)
     kzs = numpy.sort(kzs)
     ###
     
     if verbose==True:
-        print("Quartic roots are approximated as: ",kzs)
         print("Booker coefficients low to high order: ",coeffs_low_to_high)
+        print("Quartic roots are approximated as: ",kzs)
+        
         
     if not __quarttest(coeffs_low_to_high,kzs):
         raise Exception("Quartic root solver failed to sufficiently approximate roots")
@@ -558,23 +564,18 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     kbup = numpy.array([[kx,0,kzs[3]]])
     ###
     
-    if verbose==True:
-        print("kbd'",kbdp)
-        print("kad'",kadp)
-        print("kau'",kaup)
-        print("kbu'",kbup)
+   # if verbose==True:
+   #     print("kbd'",kbdp)
+   #     print("kad'",kadp)
+   #     print("kau'",kaup)
+   #     print("kbu'",kbup)
     
     ### Transform the solutions back to lab coordinates
     kbd = U @ kbdp.T
-    kad = U @ kadp.T #* (numpy.asmatrix(kadp).T)
+    kad = U @ kadp.T 
     kau = U @ kaup.T
     kbu = U @ kbup.T
     
-    if verbose==True:
-        print("kbd",kbd.T)
-        print("kad",kad.T)
-        print("kau",kau.T)
-        print("kbu",kbu.T)
 
     #kaustar = numpy.conj(kau)
     #kadstar = numpy.conj(kad)
@@ -593,7 +594,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None):
     kbdre = kbd.real
     
     
-    aunorm = numpy.sqrt((kaure.T @ kaure)[0,0])    # numpy.sqrt(numpy.sum(kau*kaustar).real)   # numpy.sqrt((xpastar.T @ xpa)[0,0].real)
+    aunorm = numpy.sqrt((kaure.T @ kaure)[0,0])    
     adnorm = numpy.sqrt((kadre.T @ kadre)[0,0])
     bunorm = numpy.sqrt((kbure.T @ kbure)[0,0])
     bdnorm = numpy.sqrt((kbdre.T @ kbdre)[0,0])
@@ -728,7 +729,7 @@ def transmit(wav,surf,med=None,verbose=None,k0=None,AR=None):
     #     med - The medium of the transmission, given as a wavecalc medium object.                     #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
     #           as an int or a float.                                                                  #
-    #      HR - If set to True, the interface is made to be fully transmissive.                        #                                                                  
+    #      AR - If set to True, the interface is made to be fully transmissive.                        #                                                                  
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
@@ -802,7 +803,7 @@ def modes(ob,med,k0=None,verbose=None):
     # The modes function.                                                                              #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #     ob - The input wave, given as a wavecalc wave object or (3,1) numpy array.                   #
+    #      ob - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
     #     med - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
     #           array.                                                                                 #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
@@ -879,10 +880,10 @@ def __modecalc(vector,medium,k0=None,verbose=None):
     
     ####################################################################################################
     #                                                                                                  #
-    # The modes function.                                                                              #
+    # The modes auxiliary function.                                                                    #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #     ob - The input wave, given as a wavecalc wave object or (3,1) numpy array.                   #
+    #      ob - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
     #     med - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
     #           array.                                                                                 #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
@@ -958,3 +959,135 @@ def __modecalc(vector,medium,k0=None,verbose=None):
 
 
 
+
+
+def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
+    ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' \n
+        For use with rotate class methods'''
+    
+    
+    ####################################################################################################
+    #                                                                                                  #
+    # The rotation function for wavecalc object methods.                                               #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #      ob - The input object to be rotated, either a wave, surface, or medium.                     #
+    #     ang - The angle of rotation in degrees, given as an int or a float.                          #
+    #    axis - The axis about which the rotation is to be performed, either 'x', 'y', or 'z'.         #
+    # medmove - If set to 'with', the media associated with waves and surfaces rotates as well. If set #
+    #           to 'only', the medium (media) is (are) rotated but not the other object attributes.    #
+    #           For surfaces: if set to 'into' only the into medium is rotated with the surface, and   #
+    #           similarly for 'out'; if set to 'onlyinto' or 'onlyout', these media are rotated while  #
+    #           the surface normal remains fixed.                                                      #
+    # verbose - If set to True, prints some information about the calculation.                         #
+    #                                                                                                  #
+    #                                                                                                  #
+    # Rotates the object in accordance with its transformation properties.                             #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 25, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    ### Raise exception for invalid 'medmove' settings
+    medmove_opts = set([None,'with','only','onlyinto','onlyout','into','out'])
+    if medmove not in medmove_opts:
+        str1 = "If specified, 'medmove' must be set to one of the following: \n"
+        str2 = "'with', 'only', 'into', 'out', 'onlyinto', 'onlyout' \n "
+        str3 = " Variable 'medmove' will be set to None for following calculation. "
+        print(str1+str2+str3)
+        medmove = None
+        
+        
+    ### Handle wave instances
+    if isinstance(ob,wavecalc.classes.wave):
+        if not __goodtest(ob):
+            raise Exception('Your wavecalc wave has improper attributes')
+        if medmove in medmove_opts-set([None,'with','only']):
+            str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
+            str2 = "Variable 'medmove' will be set to None for following calculation."
+            print(str1+str2)
+            medmove = None
+        if medmove == 'only':
+            ob.medium = __rottens(ob.medium,ang,axis)
+        else:
+            ob.kvec = __rotvec(ob.kvec,ang,axis)
+            ob.efield = __rotvec(ob.efield,ang,axis)
+            if medmove == 'with':
+                ob.medium = __rottens(ob.medium,ang,axis)
+        if verbose == True:
+            print('New kvec :',ob.kvec)
+            print('New efield :',ob.efield)
+            print('New medium :',ob.medium)
+    
+    ### Handle surface instances
+    elif isinstance(ob,wavecalc.classes.surface):
+        if not __goodtest(ob):
+            raise Exception('Your wavecalc surface has improper attributes')
+        if medmove == 'only':
+            ob.out = __rottens(ob.out,ang,axis)
+            ob.into = __rottens(ob.into,ang,axis)
+        elif medmove == 'onlyout':
+            ob.out = __rottens(ob.out,ang,axis)
+        elif medmove == 'onlyinto':
+            ob.into = __rottens(ob.into,ang,axis)
+        else:
+            ob.normal = __rotvec(ob.normal,ang,axis)
+            if medmove == 'with':
+                ob.out = __rottens(ob.out,ang,axis)
+                ob.into = __rottens(ob.into,ang,axis)
+            elif medmove == 'out':
+                ob.out = __rottens(ob.out,ang,axis)
+            elif medmove == 'into':
+                ob.into = __rottens(ob.into,ang,axis)
+        if verbose == True:
+            print('New normal :',ob.normal)
+            print('New out :',ob.into)
+            print('New int :',ob.out)
+       
+    ### Handle medium instances        
+    elif isinstance(ob,wavecalc.classes.medium):
+        if not __goodtest(ob):
+            raise Exception('Your wavecalc medium has improper attributes')
+        if medmove not in set([None]):
+            str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
+            str2 = "Variable 'medmove' will be set to None for following calculation."
+            print(str1+str2)
+        ob.epsilon = __rottens(ob.epsilon,ang,axis)
+        if verbose == True:
+            print('epsilon :',ob.epsilon)
+    
+    ### Handle unsupported object instances
+    else:
+        raise Exception("Argument 'ob' must be a (3,1) numpy array, (3,3) numpy array, or a wavecalc wave, surface, or medium")
+    
+
+
+
+def __root_order(lis):
+    ''' Sorts roots of the Booker Quartic into [kbd, kad, kau, kbu, number_of_complex_roots] '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The root ordering function.                                                                      #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # lis - The list of roots of the Booker quartic.                                                   # 
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs the sorted list of roots ordered as [kbd,kad,kau,kbu,number_of_complex_roots]            #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 23, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+
+    complexes = numpy.where(numpy.abs(numpy.imag(lis))>1e-9)[0]
+    if len(complexes)==0:
+        sol = numpy.sort(lis)
+        sol = numpy.append(sol,0)
+        return sol
+    elif len(complexes)==2:
+        sol
+        
