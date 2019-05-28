@@ -225,11 +225,29 @@ class surface:
         
 class medium:
     ''' A class for dielectric media '''
-    def __init__(self,epsilon=None):
+    def __init__(self,epx=None,epy=None,epz=None,epsilon=None):
+        if (isinstance(epx,complex) 
+            or isinstance(epy,complex) 
+            or isinstance(epz,complex)):
+            dat = complex
+        else:
+            dat = float
         if epsilon is None:
             self.epsilon = numpy.array([[1.,0.,0.],
                                         [0.,1.,0.],
-                                        [0.,0.,1.]])
+                                        [0.,0.,1.]],dtype=dat)
+            if (isinstance(epx,int) 
+                or isinstance(epx,float) 
+                or isinstance(epx,complex)):
+                self.epsilon[0,0] = epx
+            if (isinstance(epy,int) 
+                or isinstance(epy,float) 
+                or isinstance(epy,complex)):
+                self.epsilon[1,1] = epy
+            if (isinstance(epz,int) 
+                or isinstance(epz,float) 
+                or isinstance(epz,complex)):
+                self.epsilon[2,2] = epz
         elif str(type(epsilon)) == "<class 'numpy.ndarray'>" and numpy.shape(epsilon) == (3,3):
             self.epsilon = epsilon
         elif epsilon == 'random':
