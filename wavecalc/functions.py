@@ -1,58 +1,177 @@
 # -*- coding: utf-8 -*-
 import numpy
 import wavecalc
-#import warnings
-#from wavecalc import classes
-
-
+'''
+Created May 20, 2019
+author: Ryan Goetz, ryan.m.goetz@gmail.com
+'''
 '''
 Table of Contents:
 
     Foreground Functions:
         
-        modes - Line 56
+        crash - Line 64
         
-        rotate - Line 157
+        modes - Line 167
         
-        reflect - Line 300
+        rotate - Line 268
         
-        transmit - Line 406
+        reflect - Line 411
+        
+        transmit - Line 517
         
     
     Background Functions:
         
-        __goodtest - Line 506
+        aux_booker_interf - Line 617
         
-        __modecalc - Line 620
+        aux_coord_trans - Line 746
         
-        __quarttest - Line 725
+        aux_field_match - Line 848
         
-        rotate_copy - Line 785
+        aux_goodtest - Line 937
         
-        __rotmatrix - Line 912
+        aux_maxwell_eigenvec - Line 1051
         
-        __rottens - Line 983
+        aux_modecalc - Line 1125
+        
+        aux_quarttest - Line 1230
+        
+        aux_rotate_copy - Line 1290 
+        
+        aux_rotmatrix - Line 1417
+        
+        aux_rottens - Line 1488
 
-        __rotvec - Line 1035
+        aux_rotvec - Line 1540
         
-        __waveinterf - Line 1087
-        
-        
-        
+        aux_waveinterf - Line 1592
+           
         
     Under Construction:
         
-        __ferrari - Line 1351
+        aux_ferrari - Line 1796
         
-        __root_order - Line 1400
+        aux_root_order - Line 1845
 
 
-Last line check: May 26, 2019
+Last line check: May 31, 2019
 
 '''
 
 
 
+def crash(wave,surface,k0=None,verbose=None):
+    ''' Outputs the reflected and transmitted waves from 'wave' incident on 'surface' '''
+    
+     
+    ####################################################################################################
+    #                                                                                                  #
+    # The crash function.                                                                              #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #      wave - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
+    #     surface - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
+    #           array.                                                                                 #
+    #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
+    #           as an int or a float.                                                                  #                                                                 
+    # verbose - If set to True, prints more information about the calculation.                         #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs a list of wave modes in the medium parallel to ob.                                       #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 30, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+
+    ### Handle (3,1) arrays as wave input
+    if isinstance(wave,numpy.ndarray):
+        if not numpy.shape(wave)==(3,1):
+            raise Exception("If 'wave' parameter is given as a numpy.ndarray it must have shape (3,1)")
+        if verbose == True:
+            print("Input parameter 'wave' is assumed to be the wave vector")
+        if not isinstance(surface,wavecalc.classes.surface):
+            raise Exception("'surface' parameter must be given as a wavecalc surface object")
+        if (not isinstance(surface.out,numpy.ndarray) 
+            or not numpy.shape(surface.out)==(3,3)):
+            raise Exception("No out medium found: surface.out must be a (3,3) numpy ndarray")
+        if (not isinstance(surface.into,numpy.ndarray) 
+            or not numpy.shape(surface.into)==(3,3)):
+            raise Exception("No into medium found: surface.into must be a (3,3) numpy ndarray")
+            
+        k = wave
+        ef = None
+        s = surface.normal
+        ep1 = surface.out
+        ep2 = surface.into
+        if k0 is None:
+            k0 = 1
+            if verbose == True:
+                print("Assuming k0 = 1")
+        
+        sol = aux_waveinterf(k,ef,s,ep1,ep2,k0,verbose=verbose)
+        
+        return sol
+        
+                
+    ## Handle wavecalc waves as wave input
+    if isinstance(wave,wavecalc.classes.wave):
+        if not numpy.shape(wave.kvec)==(3,1):
+            raise Exception("If 'wave' parameter is given as a wavecalc wave, kvec attribute must be a numpy.ndarray with shape (3,1)")
+        if not isinstance(surface,wavecalc.classes.surface):
+            raise Exception("'surface' parameter must be given as a wavecalc surface object")
+        if (not isinstance(surface.out,numpy.ndarray) 
+            or not numpy.shape(surface.out)==(3,3)):
+            raise Exception("No out medium found: surface.out must be a (3,3) numpy ndarray")
+        if (not isinstance(surface.into,numpy.ndarray) 
+            or not numpy.shape(surface.into)==(3,3)):
+            raise Exception("No into medium found: surface.into must be a (3,3) numpy ndarray")
+        
+        k = wave.kvec
+        ef = wave.efield
+        s = surface.normal
+        ep1 = surface.out
+        ep2 = surface.into
+        if k0 is None:
+            k0 = 1
+            if verbose == True:
+                print("Assuming k0 = 1")
+        
+        sol = aux_waveinterf(k,ef,s,ep1,ep2,k0,verbose=verbose)
+        
+        return sol
+                
+    else:
+        raise Exception("'wave' parameter must be given as a wavecalc wave or (3,1) numpy.ndarray")
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
 def modes(ob,med,k0=None,verbose=None):
     ''' Outputs allowed modes of a medium parallel to input object '''
     
@@ -125,7 +244,7 @@ def modes(ob,med,k0=None,verbose=None):
         raise Exception("Wave vector must be real")
         
     else:
-        return __modecalc(vec,medi,k0,verbose)
+        return aux_modecalc(vec,medi,k0,verbose)
 #
 #
 #
@@ -192,16 +311,16 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
         
     ### Handle (3,) numpy arrays
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,1):
-        return __rotvec(ob,ang,axis)
+        return aux_rotvec(ob,ang,axis)
         
     ### Handle (3,3) numpy arrays
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,3):
-        return __rottens(ob,ang,axis)
+        return aux_rottens(ob,ang,axis)
         
         
     ### Handle wave instances
     if isinstance(ob,wavecalc.classes.wave):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc wave has improper attributes')
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
@@ -211,13 +330,13 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
         if medmove == 'only':
             kk = ob.kvec
             ee = ob.efield
-            mm = __rottens(ob.medium,ang,axis)
+            mm = aux_rottens(ob.medium,ang,axis)
         else:
-            kk = __rotvec(ob.kvec,ang,axis)
-            ee = __rotvec(ob.efield,ang,axis)
+            kk = aux_rotvec(ob.kvec,ang,axis)
+            ee = aux_rotvec(ob.efield,ang,axis)
             mm = ob.medium
             if medmove == 'with':
-                mm = __rottens(ob.medium,ang,axis)
+                mm = aux_rottens(ob.medium,ang,axis)
         if verbose == True:
             print('New kvec :',kk)
             print('New efield :',ee)
@@ -226,27 +345,27 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     
     ### Handle surface instances
     elif isinstance(ob,wavecalc.classes.surface):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         nn = ob.normal
         oo = ob.out
         ii = ob.into
         if medmove == 'only':
-            oo = __rottens(ob.out,ang,axis)
-            ii = __rottens(ob.into,ang,axis)
+            oo = aux_rottens(ob.out,ang,axis)
+            ii = aux_rottens(ob.into,ang,axis)
         elif medmove == 'onlyout':
-            oo = __rottens(ob.out,ang,axis)
+            oo = aux_rottens(ob.out,ang,axis)
         elif medmove == 'onlyinto':
-            ii = __rottens(ob.into,ang,axis)
+            ii = aux_rottens(ob.into,ang,axis)
         else:
-            nn = __rotvec(ob.normal,ang,axis)
+            nn = aux_rotvec(ob.normal,ang,axis)
             if medmove == 'with':
-                oo = __rottens(ob.out,ang,axis)
-                ii = __rottens(ob.into,ang,axis)
+                oo = aux_rottens(ob.out,ang,axis)
+                ii = aux_rottens(ob.into,ang,axis)
             elif medmove == 'out':
-                oo = __rottens(ob.out,ang,axis)
+                oo = aux_rottens(ob.out,ang,axis)
             elif medmove == 'into':
-                ii = __rottens(ob.into,ang,axis)
+                ii = aux_rottens(ob.into,ang,axis)
         if verbose == True:
             print('New normal :',nn)
             print('New out :',ii)
@@ -255,13 +374,13 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
        
     ### Handle medium instances        
     elif isinstance(ob,wavecalc.classes.medium):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc medium has improper attributes')
         if medmove not in set([None]):
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
             print(str1+str2)
-        ee = __rottens(ob.epsilon,ang,axis)
+        ee = aux_rottens(ob.epsilon,ang,axis)
         if verbose == True:
             print('epsilon :',ee)
         return wavecalc.classes.medium(epsilon=ee)
@@ -325,11 +444,11 @@ def reflect(wav,surf,med=None,verbose=None,k0=None,HR=None):
         raise Exception("The input 'wav' must be a wavecalc wave object")
     if not isinstance(surf,wavecalc.classes.surface): 
         raise Exception("The input 'surf' must be a wavecalc surface object")
-    if not __goodtest(wav):
+    if not aux_goodtest(wav):
         raise Exception('Your wavecalc wave has improper attributes')
-    if not __goodtest(surf):
+    if not aux_goodtest(surf):
         raise Exception('Your wavecalc surface has improper attributes')
-    if not __goodtest(med):
+    if not aux_goodtest(med):
         raise Exception('Your wavecalc medium has improper attributes')
     if med is None:
         if surf.out is None:
@@ -364,7 +483,7 @@ def reflect(wav,surf,med=None,verbose=None,k0=None,HR=None):
         if verbose is not False:
             print("Assuming k0 = 1")
     
-    kout = __waveinterf(wav.kvec,surf.normal,reflmed,k0,act='refl',verbose=verbose)
+    kout = aux_waveinterf(wav.kvec,surf.normal,reflmed,transmed,k0,act='refl',verbose=verbose)
     
     refla.kvec = kout[0]
     reflb.kvec = kout[1]
@@ -431,11 +550,11 @@ def transmit(wav,surf,med=None,verbose=None,k0=None,AR=None):
         raise Exception("The input 'wav' must be a wavecalc wave object")
     if not isinstance(surf,wavecalc.classes.surface): 
         raise Exception("The input 'surf' must be a wavecalc surface object")
-    if not __goodtest(wav):
+    if not aux_goodtest(wav):
         raise Exception('Your wavecalc wave has improper attributes')
-    if not __goodtest(surf):
+    if not aux_goodtest(surf):
         raise Exception('Your wavecalc surface has improper attributes')
-    if not __goodtest(med):
+    if not aux_goodtest(med):
         raise Exception('Your wavecalc medium has improper attributes')
     if med is None:
         if surf.into is None:
@@ -464,7 +583,7 @@ def transmit(wav,surf,med=None,verbose=None,k0=None,AR=None):
         if verbose is not False:
             print("Assuming k0 = 1")
     
-    kout = __waveinterf(wav.kvec,surf.normal,transmed,k0,act='trans',verbose=verbose)
+    kout = aux_waveinterf(wav.kvec,surf.normal,transmed,k0,act='trans',verbose=verbose)
     
     transa.kvec = kout[0]
     transb.kvec = kout[1]
@@ -503,7 +622,327 @@ def transmit(wav,surf,med=None,verbose=None,k0=None,AR=None):
 #
 #         
 #
-def __goodtest(ob):
+def aux_booker_interf(kx,med1,med2,verbose=None):
+    ''' A behind-the-scenes function for solving the Booker equation at a boundary '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The Booker quartic solution at an interface                                                      #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #      kx - The the x component of normalized input wave vector in solver coordinates, given as a  #
+    #           float or int.                                                                          #
+    #    med1 - The incident/reflection medium given as a (3,3) numpy ndarray. Must be given in solver #
+    #           coordinates.                                                                           #
+    #    med2 - The transmission medium given as a (3,3) numpy ndarray. Must be given in solver        #
+    #           coordinates.                                                                           #
+    # verbose - If set to True, prints more information about the calculation                          #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs a list of the two reflection wave vectors and two transmission wave vectors as (3,1)     #
+    # numpy ndarrays.                                                                                  # 
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 30, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    
+    ### Compute the minors of epsilon 1 in the solution coordinates
+    M1 = numpy.zeros([3,3],dtype=complex)
+    for i in range(3):
+        for j in range(3):
+            minora = numpy.delete(med1,i,axis=0)
+            minor = numpy.delete(minora,j,axis=1)
+            M1[i,j] = numpy.linalg.det(minor)
+    ###
+    
+    ### Compute the minors of epsilon 2 in the solution coordinates
+    M2 = numpy.zeros([3,3],dtype=complex)
+    for i in range(3):
+        for j in range(3):
+            minora = numpy.delete(med2,i,axis=0)
+            minor = numpy.delete(minora,j,axis=1)
+            M2[i,j] = numpy.linalg.det(minor)
+    ###
+    
+    ### Some convenient quantities to calculate
+    ID = numpy.array([[1,0,0],[0,1,0],[0,0,1]])
+    
+    detep1 = med1[0,0]*M1[0,0]-med1[0,1]*M1[0,1]+med1[0,2]*M1[0,2]
+    sig1 = med1+med1.T
+    delt1 = (med1[0,0]+med1[1,1]+med1[2,2])*ID-med1
+    
+    detep2 = med2[0,0]*M2[0,0]-med2[0,1]*M2[0,1]+med2[0,2]*M2[0,2]
+    sig2 = med2+med2.T
+    delt2 = (med2[0,0]+med2[1,1]+med2[2,2])*ID-med2
+    ###
+    
+    ### The coefficients of the quartic in kz/k0
+    DELTA1 = kx*sig1[0,2]
+    SIGMA1 = (kx**2)*delt1[1,1]-(M1[0,0]+M1[1,1])
+    PSI1 = (kx**3)*sig1[0,2]+kx*(M1[0,2]+M1[2,0])
+    GAMMA1 = (kx**4)*med1[0,0]-(kx**2)*(M1[1,1]+M1[2,2])+detep1
+    
+    DELTA2 = kx*sig2[0,2]
+    SIGMA2 = (kx**2)*delt2[1,1]-(M2[0,0]+M2[1,1])
+    PSI2 = (kx**3)*sig2[0,2]+kx*(M2[0,2]+M2[2,0])
+    GAMMA2 = (kx**4)*med2[0,0]-(kx**2)*(M2[1,1]+M2[2,2])+detep2
+    ###
+    
+    if verbose==True:
+        print('DELTA_r =',DELTA1)
+        print("SIGMA_r =",SIGMA1)
+        print("PSI_r =",PSI1)
+        print("GAMMA_r =",GAMMA1)
+        print('DELTA_t =',DELTA2)
+        print("SIGMA_t =",SIGMA2)
+        print("PSI_t =",PSI2)
+        print("GAMMA_t =",GAMMA2)
+    
+    
+    
+    ### Roots of the quartic
+    coeffs_low_to_high_1 = [GAMMA1,PSI1,SIGMA1,DELTA1,med1[2,2]]
+    coeffs_low_to_high_2 = [GAMMA2,PSI2,SIGMA2,DELTA2,med2[2,2]]
+    kzs1 = numpy.polynomial.polynomial.polyroots(coeffs_low_to_high_1)
+    kzs2 = numpy.polynomial.polynomial.polyroots(coeffs_low_to_high_2)
+    kzs1 = numpy.sort(kzs1)
+    kzs2 = numpy.sort(kzs2)
+    
+    kzout = [kzs1[0],kzs1[1],kzs2[2],kzs2[3]]
+    
+    if verbose==True:
+        print("Quartic roots are approximated as: ",kzout)
+        
+    if not aux_quarttest(coeffs_low_to_high_1,kzs1):
+        raise Exception("Quartic root solver failed to sufficiently approximate reflection roots")
+        
+    if not aux_quarttest(coeffs_low_to_high_2,kzs2):
+        raise Exception("Quartic root solver failed to sufficiently approximate transmission roots")
+        
+    return kzout
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+def aux_coord_transform(k,s,verbose=None):
+    ''' A behind-the-scenes function calculating the solver coordinate transform matrix and inverse '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The solver coordinate transform calculator                                                       #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #       k - The input wave vector given as a (3,1) numpy ndarray.                                  #
+    #       s - The surface normal vector given as a (3,1) numpy ndarray.                              #
+    # verbose - If set to True, prints more information about the calculation.                         #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs a list of the transformation matrix U and its inverse as (3,3) numpy ndarrays            #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 30, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################   
+    
+    ### Check if the wave is incident on the surface #############
+    kdotS = (k.T @ s)[0,0] 
+    if kdotS<=0:
+        str1 = 'Wave vector is not incident on interface'
+        raise Exception(str1)
+    ##############################################################
+    
+    snorm = numpy.sqrt((s.T @ s)[0,0])
+    S = s/snorm
+    zp = S
+    kstar = numpy.conj(k)
+    knorm = numpy.sqrt((kstar.T @ k)[0,0].real)
+    
+    xpa = k-kdotS*S
+    xpastar = numpy.conj(xpa)
+    xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)
+    
+    ### Handle when k and s are parallel ############################
+    if xnorm<1e-14:
+        ### Consider when a component of zp is zero:
+        if len(numpy.where(zp<1e-14)[0])>0:
+            ### Case where 1 is zero:
+            if len(numpy.where(zp<1e-14)[0])==0:
+                goods = numpy.where(zp>1e-14)[0]
+                xpa = numpy.zeros([3,1])
+                xpa[goods[0]] = -zp[goods[1]]/zp[goods[0]]
+                xpa[goods[1]] = 1
+                xpastar = numpy.conj(xpa)
+                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   
+                xp = xpa/newnorm
+            ### Other case is 2 are zero (all three can't be zero):
+            else:
+                good = numpy.where(zp<1e-14)[0]
+                xpa = numpy.zeros([3,1])
+                xpa[good[0]] = 1
+                xp = xpa
+                
+    #################################################################
+    
+    else:
+        xp=xpa/xnorm
+        
+        
+    yp = numpy.cross(zp.T,xp.T).T
+    U = numpy.array([[xp[0,0],yp[0,0],zp[0,0]],[xp[1,0],yp[1,0],zp[1,0]],[xp[2,0],yp[2,0],zp[2,0]]])
+    Uinv = numpy.linalg.inv(U)
+    
+    if verbose==True:
+        print('k_hat . s_hat = ',kdotS/knorm)
+        print('U = ',U)
+        print('Uinv = ',Uinv)
+        
+    return [U,Uinv]
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+def aux_field_match(k_alpha,k_beta,k_gamma,k_nu,alpha,beta,gamma,nu,kin,Ein,verbose=None):
+    ''' A behind-the-scenes function matching electric fields with boundary conditions '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The field matching function                                                                      #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # k_alpha - The alpha wave vector in solver coordinates given as a (3,1) numpy ndarray.            #
+    #  k_beta - The beta wave vector in solver coordinates given as a (3,1) numpy ndarray.             #
+    # k_gamma - The gamma wave vector in solver coordinates given as a (3,1) numpy ndarray.            #
+    #    k_nu - The nu wave vector in solver coordinates given as a (3,1) numpy ndarray.               #
+    #   alpha - The normed alpha field vector in solver coordinates given as a (3,1) numpy ndarray.    #
+    #    beta - The normed beta field vector in solver coordinates given as a (3,1) numpy ndarray.     #
+    #   gamma - The normed gamma field vector in solver coordinates given as a (3,1) numpy ndarray.    #
+    #      nu - The normed nu field vector in solver coordinates given as a (3,1) numpy ndarray.       #
+    #    k_in - The incident wave vector in solver coordinates given as a (3,1) numpy ndarray.         #
+    #     Ein - The incident field vector in solver coordinates given as a (3,1) numpy ndarray.        #
+    # verbose - If set to True, prints more information about the calculation                          #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs the four reflection and transmission coefficients as a (4,) numpy ndarray.               # 
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 30, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    
+    M = numpy.zeros([4,4],dtype=complex)
+    b = numpy.zeros([4],dtype=complex)
+    
+    M[0,0] = alpha[0,0]
+    M[0,1] = beta[0,0]
+    M[0,2] = -gamma[0,0]
+    M[0,3] = -nu[0,0]
+    
+    M[1,0] = alpha[1,0]
+    M[1,1] = beta[1,0]
+    M[1,2] = -gamma[1,0]
+    M[1,3] = -nu[1,0]
+    
+    M[2,0] = k_alpha[2,0]*alpha[1,0]
+    M[2,1] = k_beta[2,0]*beta[1,0]
+    M[2,2] = -k_gamma[2,0]*gamma[1,0]
+    M[2,3] = -k_nu[2,0]*nu[1,0]
+    
+    M[3,0] = k_alpha[2,0]*alpha[0,0] - k_alpha[0,0]*alpha[2,0]
+    M[3,1] = k_beta[2,0]*beta[0,0] - k_beta[0,0]*beta[2,0]
+    M[3,2] = k_gamma[0,0]*gamma[2,0] - k_gamma[2,0]*gamma[0,0]
+    M[3,3] = k_nu[0,0]*nu[2,0] - k_nu[2,0]*nu[0,0]
+    
+    b[0] = -Ein[0,0]
+    b[1] = -Ein[1,0]
+    b[2] = -kin[2,0]*Ein[1,0]
+    b[3] = kin[0,0]*Ein[2,0]-kin[2,0]*Ein[0,0]
+    
+    sol = numpy.linalg.solve(M,b)
+    
+    return sol
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_goodtest(ob):
     ''' A behind-the-scenes function for testing whether wavecalc objects have proper attributes '''
     
    
@@ -616,9 +1055,93 @@ def __goodtest(ob):
 #
 #
 #         
+#
+def aux_maxwell_eigenvec(k,ep,k0,verbose=None,switch=None):
+    ''' A behind-the-scenes function for finding specific eigenvectors of the Maxwell operator '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The Maxwell eigenvector finder                                                                   #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #       k - The wave vector in solver coordinates, given as a (3,1) numpy ndarray.                 #
+    #      ep - The medium given as a (3,3) numpy ndarray in solver coordinates.                       #
+    # verbose - If set to True, prints more information about the calculation                          #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs the eigenvector corresponding to the Maxwell operator with eigenvalue k^2 as a (3,1)     # 
+    # numpy ndarray.                                                                                   # 
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: May 30, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    MAXOP = k @ k.T + (k0**2)*ep
+    val = (k.T @ k)[0,0]
+    tol = 1e-8
+    
+    e_vals, e_vecs = numpy.linalg.eig(MAXOP)
+    
+    e_vals = numpy.real(e_vals)
+    
+    ell = len(e_vals)
+    
+    over = numpy.zeros(ell)
+    under = numpy.zeros(ell)
+    
+    for i in range(0,ell):
+        if e_vals[i] > val-tol:
+            over[i] = 1
+        if e_vals[i] < val+tol:
+            under[i] = 1
+    
+    if verbose == True:
+        print('eigenvalue should be:',val)
+        print('eigenvalues approximated as:',e_vals)
+        print('over*under = ',over*under)
+    
+    if numpy.sum(over*under) == 1:    
+        good = numpy.where(over*under==1)[0][0]
+        sol = numpy.array([e_vecs[good]]).T
+        return sol
+    elif numpy.sum(over*under) == 2:
+        good = numpy.where(over*under==1)[0][switch]
+        sol = numpy.array([e_vecs[good]]).T
+        return sol
+    else:
+        raise Exception('numpy has failed to appropriately approximate eigenvalues')
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
 #    
-def __modecalc(vector,medium,k0=None,verbose=None):
-    ''' Solves the Booker quartic for  '''
+def aux_modecalc(vector,medium,k0=None,verbose=None):
+    ''' Solves the Booker quartic for unbounded media '''
     
     
     ####################################################################################################
@@ -722,7 +1245,7 @@ def __modecalc(vector,medium,k0=None,verbose=None):
 #
 #         
 # 
-def __quarttest(coeffs,solves):
+def aux_quarttest(coeffs,solves):
     ''' A behind-the-scenes function for testing a quartic has been properly solved '''
     
    
@@ -782,7 +1305,7 @@ def __quarttest(coeffs,solves):
 #
 #         
 #
-def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
+def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
     ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' \n
         For use with rotate class methods'''
     
@@ -822,7 +1345,7 @@ def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
         
     ### Handle wave instances
     if isinstance(ob,wavecalc.classes.wave):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc wave has improper attributes')
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
@@ -830,12 +1353,12 @@ def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
             print(str1+str2)
             medmove = None
         if medmove == 'only':
-            ob.medium = __rottens(ob.medium,ang,axis)
+            ob.medium = aux_rottens(ob.medium,ang,axis)
         else:
-            ob.kvec = __rotvec(ob.kvec,ang,axis)
-            ob.efield = __rotvec(ob.efield,ang,axis)
+            ob.kvec = aux_rotvec(ob.kvec,ang,axis)
+            ob.efield = aux_rotvec(ob.efield,ang,axis)
             if medmove == 'with':
-                ob.medium = __rottens(ob.medium,ang,axis)
+                ob.medium = aux_rottens(ob.medium,ang,axis)
         if verbose == True:
             print('New kvec :',ob.kvec)
             print('New efield :',ob.efield)
@@ -843,24 +1366,24 @@ def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
     
     ### Handle surface instances
     elif isinstance(ob,wavecalc.classes.surface):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         if medmove == 'only':
-            ob.out = __rottens(ob.out,ang,axis)
-            ob.into = __rottens(ob.into,ang,axis)
+            ob.out = aux_rottens(ob.out,ang,axis)
+            ob.into = aux_rottens(ob.into,ang,axis)
         elif medmove == 'onlyout':
-            ob.out = __rottens(ob.out,ang,axis)
+            ob.out = aux_rottens(ob.out,ang,axis)
         elif medmove == 'onlyinto':
-            ob.into = __rottens(ob.into,ang,axis)
+            ob.into = aux_rottens(ob.into,ang,axis)
         else:
-            ob.normal = __rotvec(ob.normal,ang,axis)
+            ob.normal = aux_rotvec(ob.normal,ang,axis)
             if medmove == 'with':
-                ob.out = __rottens(ob.out,ang,axis)
-                ob.into = __rottens(ob.into,ang,axis)
+                ob.out = aux_rottens(ob.out,ang,axis)
+                ob.into = aux_rottens(ob.into,ang,axis)
             elif medmove == 'out':
-                ob.out = __rottens(ob.out,ang,axis)
+                ob.out = aux_rottens(ob.out,ang,axis)
             elif medmove == 'into':
-                ob.into = __rottens(ob.into,ang,axis)
+                ob.into = aux_rottens(ob.into,ang,axis)
         if verbose == True:
             print('New normal :',ob.normal)
             print('New out :',ob.into)
@@ -868,13 +1391,13 @@ def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
        
     ### Handle medium instances        
     elif isinstance(ob,wavecalc.classes.medium):
-        if not __goodtest(ob):
+        if not aux_goodtest(ob):
             raise Exception('Your wavecalc medium has improper attributes')
         if medmove not in set([None]):
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
             print(str1+str2)
-        ob.epsilon = __rottens(ob.epsilon,ang,axis)
+        ob.epsilon = aux_rottens(ob.epsilon,ang,axis)
         if verbose == True:
             print('epsilon :',ob.epsilon)
     
@@ -909,7 +1432,7 @@ def rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
 #
 #         
 #    
-def __rotmatrix(ang,axis=None):
+def aux_rotmatrix(ang,axis=None):
     ''' A behind-the-scenes function for building rotation matrices '''
     
     
@@ -980,7 +1503,7 @@ def __rotmatrix(ang,axis=None):
 #
 #         
 #    
-def __rottens(tens,ang,axis=None):
+def aux_rottens(tens,ang,axis=None):
     ''' A behind-the-scenes function to rotate tensors around a specified axis: 'x', 'y', or 'z' '''
     
     
@@ -1000,8 +1523,8 @@ def __rottens(tens,ang,axis=None):
     # Last Updated: May 21, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
-    Rinv = __rotmatrix(-ang,axis)
-    Ro = __rotmatrix(ang,axis)
+    Rinv = aux_rotmatrix(-ang,axis)
+    Ro = aux_rotmatrix(ang,axis)
     sol = Ro @ tens @ Rinv
     return sol
 #
@@ -1032,7 +1555,7 @@ def __rottens(tens,ang,axis=None):
 #
 #         
 #
-def __rotvec(vec,ang,axis=None):
+def aux_rotvec(vec,ang,axis=None):
     ''' A behind-the-scenes function to rotate vectors around a specified axis: 'x', 'y', or 'z' '''
     
     
@@ -1053,7 +1576,7 @@ def __rotvec(vec,ang,axis=None):
     #                                                                                                  #
     ####################################################################################################
     
-    Ro = __rotmatrix(ang,axis)
+    Ro = aux_rotmatrix(ang,axis)
     sol = Ro @ vec
     return sol
 #
@@ -1084,8 +1607,8 @@ def __rotvec(vec,ang,axis=None):
 #
 #         
 #
-def __waveinterf(k,s,ep,k0,act=None,verbose=None,roots=None):
-    ''' Outputs reflection or transmission wave vectors as an array of (3,1) arrays '''
+def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,verbose=None):
+    ''' Outputs reflection and/or transmission waves as a list of (3,1) arrays or wavecalc waves '''
     
     
     ####################################################################################################
@@ -1094,22 +1617,23 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None,roots=None):
     #                                                                                                  #
     # INPUTS:                                                                                          #
     #       k - The input wave vector, given as a (3,1) array.                                         #
+    #      ef - The input electric field vector, given as a (3,1) array.                               #
     #       s - The surface normal vector which defines interface surface, given as a (3,1) array.     #
-    #      ep - The dielectric tensor of either the reflection or transmission medium, given as a      #
-    #           (3,3) numpy array.                                                                     # 
+    #     ep1 - The dielectric tensor of the reflection medium, given as a (3,3) numpy ndarray.        #
+    #     ep2 - The dielectric tensor of the transmission medium, given as a (3,3) numpy array.        #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
     #           as an int or a float.                                                                  #
     #     act - The action of interest, either a reflection denoted by setting the variable to 'refl', #
     #           or a transmission denoted by setting the variable to 'trans'. Leaving the variable     #
-    #           unspecified results in both outputs, but note that they are not simultaneously         #
-    #           meaningful.                                                                            #
+    #           unspecified results in both outputs.                                                   #
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs either a (2,) or (4,) array of (3,1) arrays, corresponding to the output wave vectors.   #
+    # Outputs a (4,) list of (3,1) arrays or wavecalc waves, corresponding to the output wave vectors  #
+    # or output waves respectively.                                                                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 26, 2019                                                                       #
+    # Last Updated: May 30, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
@@ -1121,72 +1645,18 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None,roots=None):
     ##################################### CHANGE OF COORDINATES ########################################
     ####################################################################################################
     ####################################################################################################
- 
-    snorm = numpy.sqrt((s.T @ s)[0,0])
-    S = s/snorm
-    zp = S
-    kdotS = (k.T @ s)[0,0] 
-    kstar = numpy.conj(k)
-    knorm = numpy.sqrt((kstar.T @ k)[0,0].real)
     
-    ### Check if the wave is incident on the surface #############
-    if kdotS<=0:
-        str1 = 'Error: Wave vector is not incident on interface'
-        raise Exception(str1)
-    ##############################################################
+    coord = aux_coord_transform(k,s,verbose=verbose)
+    U = coord[0]
+    Uinv = coord[1]
     
-    xpa = k-kdotS*S
-    xpastar = numpy.conj(xpa)
-    xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)
+    k_p = Uinv @ k
     
-    ### Handle when k and s are parallel ############################
-    if xnorm<1e-14:
-        ### Consider when a component of zp is zero:
-        if len(numpy.where(zp<1e-14)[0])>0:
-            ### Case where 1 is zero:
-            if len(numpy.where(zp<1e-14)[0])==0:
-                goods = numpy.where(zp>1e-14)[0]
-                xpa = numpy.zeros([3,1])
-                xpa[goods[0]] = -zp[goods[1]]/zp[goods[0]]
-                xpa[goods[1]] = 1
-                xpastar = numpy.conj(xpa)
-                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   
-                xp = xpa/newnorm
-            ### Other case is 2 are zero (all three can't be zero):
-            else:
-                good = numpy.where(zp<1e-14)[0]
-                xpa = numpy.zeros([3,1])
-                xpa[good[0]] = 1
-                xp = xpa
-                
-    #################################################################
+    if ef is not None:
+        ef_p = Uinv @ ef
     
-    else:
-        xp=xpa/xnorm
-        
-        
-    yp = numpy.cross(zp.T,xp.T).T
-    U = numpy.array([[xp[0,0],yp[0,0],zp[0,0]],[xp[1,0],yp[1,0],zp[1,0]],[xp[2,0],yp[2,0],zp[2,0]]])
-    Uinv = numpy.linalg.inv(U)
-    kp = Uinv @ k
-    
-    
-    ### The transformed dielectric tensor ###
-    epp = Uinv @ ep @ U
-    #########################################
-    
-    ####################################################################################################
-    ####################################################################################################
-    ####################################################################################################
-    
-    if verbose==True:
-        print('k_hat . s_hat =',kdotS/knorm)
-        print("k.T' =",kp.T)
-        print("x.T' =",xp.T)
-        print("y.T' =",yp.T)
-        print("z.T' =",zp.T)
-        print('U =',U)
-    
+    ep1_p = Uinv @ ep1 @ U
+    ep2_p = Uinv @ ep2 @ U
     
     
     ####################################################################################################
@@ -1197,129 +1667,122 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None,roots=None):
     
     ### Normalize the k components
     #norm = np.sqrt(kp[0]**2+kp[1]**2+kp[2]**2)
-    kx = kp[0,0]/k0
+    kx = k_p[0,0]/k0
     ###
     
-    ### Compute the minors of epsilon in the solution coordinates
-    M = numpy.zeros([3,3],dtype=complex)
-    for i in range(3):
-        for j in range(3):
-            minora = numpy.delete(epp,i,axis=0)
-            minor = numpy.delete(minora,j,axis=1)
-            M[i,j] = numpy.linalg.det(minor)
+    kz_vals = aux_booker_interf(kx,ep1_p,ep2_p,verbose=verbose)
+
+
+    ### The four (normalized and transposed) solution wave vectors in solver coordinates
+    k_alpha_p = numpy.array([[kx,0,kz_vals[1]]])
+    k_beta_p = numpy.array([[kx,0,kz_vals[0]]])
+    k_gamma_p = numpy.array([[kx,0,kz_vals[2]]])
+    k_nu_p = numpy.array([[kx,0,kz_vals[3]]])
     ###
     
-    ### Some convenient quantities to calculate
-    ID = numpy.array([[1,0,0],[0,1,0],[0,0,1]])
-    detep = epp[0,0]*M[0,0]-epp[0,1]*M[0,1]+epp[0,2]*M[0,2]
-    sig = epp+epp.T
-    delt = (epp[0,0]+epp[1,1]+epp[2,2])*ID-epp
-    ###
+    ### Un-normalize and transpose the wave vectors
+    k_alpha_p = k0*k_alpha_p.T
+    k_beta_p = k0*k_beta_p.T
+    k_gamma_p = k0*k_gamma_p.T
+    k_nu_p = k0*k_nu_p.T
     
-    ### The coefficients of the quartic in kz/k0
-    DELTA = kx*sig[1,2]
-    SIGMA = (kx**2)*delt[1,1]-(M[0,0]+M[1,1])
-    PSI = (kx**3)*sig[0,2]+kx*(M[0,2]+M[2,0])
-    GAMMA = (kx**4)*epp[0,0]-(kx**2)*(M[1,1]+M[2,2])+detep
-    ###
-    
-    if verbose==True:
-        print('DELTA =',DELTA)
-        print("SIGMA =",SIGMA)
-        print("PSI =",PSI)
-        print("GAMMA =",GAMMA)
-    
-    
-    
-    ### Roots of the quartic
-    coeffs_low_to_high = [GAMMA,PSI,SIGMA,DELTA,epp[2,2]]
-    kzs = numpy.polynomial.polynomial.polyroots(coeffs_low_to_high)
-    kzs = numpy.sort(kzs)
-    ###
-    
-    if verbose==True:
-        print("Booker coefficients low to high order: ",coeffs_low_to_high)
-        print("Quartic roots are approximated as: ",kzs)
-        
-        
-    if not __quarttest(coeffs_low_to_high,kzs):
-        raise Exception("Quartic root solver failed to sufficiently approximate roots")
-    
-    
-    ####################################################################################################
-    ####################################################################################################
-    ####################################################################################################
-    
-    
-    
-    
-    ### The four (normalized) solution wave vectors in solver coordinates
-    kbdp = numpy.array([[kx,0,kzs[0]]])
-    kadp = numpy.array([[kx,0,kzs[1]]])
-    kaup = numpy.array([[kx,0,kzs[2]]])
-    kbup = numpy.array([[kx,0,kzs[3]]])
-    ###
-    
-   # if verbose==True:
-   #     print("kbd'",kbdp)
-   #     print("kad'",kadp)
-   #     print("kau'",kaup)
-   #     print("kbu'",kbup)
     
     ### Transform the solutions back to lab coordinates
-    kbd = U @ kbdp.T
-    kad = U @ kadp.T 
-    kau = U @ kaup.T
-    kbu = U @ kbup.T
-    
-
-    #kaustar = numpy.conj(kau)
-    #kadstar = numpy.conj(kad)
-    #kbustar = numpy.conj(kbu)
-    #kbdstar = numpy.conj(kbd)
+    k_alpha = U @ k_alpha_p
+    k_beta = U @ k_beta_p
+    k_gamma = U @ k_gamma_p
+    k_nu = U @ k_nu_p
     
     ### Build the array of solutions and un-normalize
-    sol = numpy.array([kbd,kad,kau,kbu])*k0
-    refls = numpy.array([kad,kbd])*k0
-    transs = numpy.array([kau,kbu])*k0
+    both = numpy.array([k_alpha,k_beta,k_gamma,k_nu])*k0
+    refls = numpy.array([k_alpha,k_beta])*k0
+    transs = numpy.array([k_gamma,k_nu])*k0
     
     ### Calculate effective indices of refraction
-    kaure = kau.real
-    kadre = kad.real
-    kbure = kbu.real
-    kbdre = kbd.real
+    k_alpha_re = k_alpha.real
+    k_beta_re = k_beta.real
+    k_gamma_re = k_gamma.real
+    k_nu_re = k_nu.real
     
     
-    aunorm = numpy.sqrt((kaure.T @ kaure)[0,0])    
-    adnorm = numpy.sqrt((kadre.T @ kadre)[0,0])
-    bunorm = numpy.sqrt((kbure.T @ kbure)[0,0])
-    bdnorm = numpy.sqrt((kbdre.T @ kbdre)[0,0])
+    alpha_norm = numpy.sqrt((k_alpha_re.T @ k_alpha_re)[0,0])    
+    beta_norm = numpy.sqrt((k_beta_re.T @ k_beta_re)[0,0])
+    gamma_norm = numpy.sqrt((k_gamma_re.T @ k_gamma_re)[0,0])
+    nu_norm = numpy.sqrt((k_nu_re.T @ k_nu_re)[0,0])
     
-    nau = aunorm/k0
-    nad = adnorm/k0
-    nbu = bunorm/k0
-    nbd = bdnorm/k0
+    n_alpha = alpha_norm/k0
+    n_beta = beta_norm/k0
+    n_gamma = gamma_norm/k0
+    n_nu = nu_norm/k0
     
-    if roots=='only':
-        return kzs
+    if ef is None:
+        if act=='refl':
+            if verbose==True:
+                print('alpha-wave effective index=',n_alpha)
+                print('beta-wave effective index=',n_beta)
+            return refls
+        elif act=='trans':
+            if verbose==True:
+                print('gamma-wave effective index=',n_gamma)
+                print('nu-wave effective index=',n_nu)
+            return transs
+        else:
+            if verbose==True:
+                print('alpha-wave (refl) effective index=',n_alpha)
+                print('beta-wave (refl) effective index=',n_beta)
+                print('gamma-wave (trans) effective index=',n_gamma)
+                print('nu-wave (trans) effective index=',n_nu)
+            return both
+        
+    
+    alpha_p = aux_maxwell_eigenvec(k_alpha_p,ep1_p,k0,verbose=verbose,switch=0)
+    beta_p = aux_maxwell_eigenvec(k_beta_p,ep1_p,k0,verbose=verbose,switch=1)
+    gamma_p = aux_maxwell_eigenvec(k_gamma_p,ep2_p,k0,verbose=verbose,switch=0)
+    nu_p = aux_maxwell_eigenvec(k_nu_p,ep2_p,k0,verbose=verbose,switch=1)
+    
+    
+    coeffs = aux_field_match(k_alpha_p,k_beta_p,k_gamma_p,k_nu_p,
+                             alpha_p,beta_p,gamma_p,nu_p,
+                             k_p,ef_p,
+                             verbose=verbose)
+    
+    R_alpha = coeffs[0]
+    R_beta = coeffs[1]
+    T_gamma = coeffs[2]
+    T_nu = coeffs[3]
+    
+    alpha_ef = R_alpha*(U @ alpha_p)
+    beta_ef = R_beta*(U @ beta_p)
+    gamma_ef = T_gamma*(U @ gamma_p)
+    nu_ef = T_nu*(U @ nu_p)
+    
+    
+    alpha_wave = wavecalc.classes.wave(k_alpha,alpha_ef,ep1) 
+    beta_wave = wavecalc.classes.wave(k_beta,beta_ef,ep1)
+    gamma_wave = wavecalc.classes.wave(k_gamma,gamma_ef,ep2)
+    nu_wave = wavecalc.classes.wave(k_nu,nu_ef,ep2)
+    
+    both = [alpha_wave,beta_wave,gamma_wave,nu_wave]
+    refls = [alpha_wave,beta_wave]
+    transs = [gamma_wave,nu_wave]
     
     if act=='refl':
         if verbose==True:
-            print('a-wave effective index=',nad)
-            print('b-wave effective index=',nbd)
+            print('alpha-wave effective index=',n_alpha)
+            print('beta-wave effective index=',n_beta)
         return refls
     elif act=='trans':
         if verbose==True:
-            print('a-wave effective index=',nau)
-            print('b-wave effective index=',nbu)
+            print('gamma-wave effective index=',n_gamma)
+            print('nu-wave effective index=',n_nu)
         return transs
     else:
         if verbose==True:
-            print('a-wave refl effective index=',nad)
-            print('b-wave refl effective index=',nbd)
-            print('a-wave trans effective index=',nau)
-            print('b-wave trans effective index=',nbu)
-        return sol
+            print('alpha-wave (refl) effective index=',n_alpha)
+            print('beta-wave (refl) effective index=',n_beta)
+            print('gamma-wave (trans) effective index=',n_gamma)
+            print('nu-wave (trans) effective index=',n_nu)
+        return both
 #
 #
 #
@@ -1348,7 +1811,7 @@ def __waveinterf(k,s,ep,k0,act=None,verbose=None,roots=None):
 #
 #         
 #
-def __ferrari(coeffs):
+def aux_ferrari(coeffs):
     ''' A behind-the-scenes function that uses the Ferrari method to solve quartics '''
     
    
@@ -1368,7 +1831,7 @@ def __ferrari(coeffs):
     #                                                                                                  #
     ####################################################################################################
     
-    return print("Not if this is necessary yet")
+    return print("Not sure if this is necessary yet")
 #
 #
 #
@@ -1397,7 +1860,7 @@ def __ferrari(coeffs):
 #
 #         
 #
-def __root_order(lis):
+def aux_root_order(lis):
     ''' Sorts roots of the Booker Quartic into [kbd, kad, kau, kbu, number_of_complex_roots] '''
     
    

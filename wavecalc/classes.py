@@ -2,13 +2,13 @@
 """
 Created on Mon May 20 23:14:02 2019
 
-@author: Ryan
+@author: Ryan Goetz, ryan.m.goetz@gmail.com
 """
 import wavecalc
 #from wavecalc import functions
 import numpy
 from numpy import random
-from wavecalc.functions import rotate_copy as rotate_copy
+from wavecalc.functions import aux_rotate_copy as rotate_copy
 from wavecalc.functions import transmit as transmit
 from wavecalc.functions import reflect as reflect
 #import wavecalc.functions as fun   # for when we define wave + surface
