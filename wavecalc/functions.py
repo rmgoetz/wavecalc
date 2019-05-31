@@ -4,55 +4,56 @@ import wavecalc
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
+last update: May 31, 2019 16:59 EST
 '''
 '''
 Table of Contents:
 
     Foreground Functions:
         
-        crash - Line 64
+        crash - Line 65
         
-        modes - Line 167
+        modes - Line 168
         
-        rotate - Line 268
+        rotate - Line 269
         
-        reflect - Line 411
+        reflect - Line 412
         
-        transmit - Line 517
+        transmit - Line 518
         
     
     Background Functions:
         
-        aux_booker_interf - Line 617
+        aux_booker_interf - Line 618
         
-        aux_coord_trans - Line 746
+        aux_coord_trans - Line 747
         
-        aux_field_match - Line 848
+        aux_field_match - Line 849
         
-        aux_goodtest - Line 937
+        aux_goodtest - Line 938
         
-        aux_maxwell_eigenvec - Line 1051
+        aux_maxwell_eigenvec - Line 1052
         
-        aux_modecalc - Line 1125
+        aux_modecalc - Line 1126
         
-        aux_quarttest - Line 1230
+        aux_quarttest - Line 1231
         
-        aux_rotate_copy - Line 1290 
+        aux_rotate_copy - Line 1291 
         
-        aux_rotmatrix - Line 1417
+        aux_rotmatrix - Line 1418
         
-        aux_rottens - Line 1488
+        aux_rottens - Line 1489
 
-        aux_rotvec - Line 1540
+        aux_rotvec - Line 1541
         
-        aux_waveinterf - Line 1592
+        aux_waveinterf - Line 1593
            
         
     Under Construction:
         
-        aux_ferrari - Line 1796
+        aux_ferrari - Line 1797
         
-        aux_root_order - Line 1845
+        aux_root_order - Line 1846
 
 
 Last line check: May 31, 2019
@@ -64,24 +65,24 @@ Last line check: May 31, 2019
 def crash(wave,surface,k0=None,verbose=None):
     ''' Outputs the reflected and transmitted waves from 'wave' incident on 'surface' '''
     
-     
+    ### Stauts: fully functional ### 
     ####################################################################################################
     #                                                                                                  #
     # The crash function.                                                                              #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #      wave - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
-    #     surface - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
+    #    wave - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
+    # surface - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
     #           array.                                                                                 #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
     #           as an int or a float.                                                                  #                                                                 
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs a list of wave modes in the medium parallel to ob.                                       #
+    # Outputs a list of four waves resulting from wave incident on surface.                            #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 30, 2019                                                                       #
+    # Last Updated: May 31, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
 
