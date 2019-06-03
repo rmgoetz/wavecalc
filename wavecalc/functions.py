@@ -75,7 +75,7 @@ Last line check: June 2, 2019
 def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
     ''' Outputs the reflected and transmitted waves from 'wave' incident on 'surface' '''
     
-    ### Stauts: fully functional ### 
+     
     ####################################################################################################
     #                                                                                                  #
     # The crash function.                                                                              #
@@ -92,13 +92,16 @@ def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
     #      verbose - If set to True, prints more information about the calculation.                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs a list of four waves resulting from wave incident on surface.                            #
+    # Outputs a list of up to four waves resulting from wave incident on surface.                      #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: June 2, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
  
+    
+    # Handle the coating choice
+    #---------------------------------------------------------------------------------------------------
     coats=['AR','ar','HR','hr']  
     if coat is not None and coat not in coats:
         coat = None
@@ -107,7 +110,7 @@ def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
         combine_same = False
     
     
-    # handle (3,1) arrays as wave input
+    # Handle (3,1) arrays as wave input
     #---------------------------------------------------------------------------------------------------
     if isinstance(wave,numpy.ndarray):
         if not numpy.shape(wave)==(3,1):
@@ -138,7 +141,7 @@ def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
         return sol
         
                 
-    # handle wavecalc waves as wave input
+    # Handle wavecalc waves as wave input
     #---------------------------------------------------------------------------------------------------
     if isinstance(wave,wavecalc.classes.wave):
         if not numpy.shape(wave.kvec)==(3,1):
@@ -167,7 +170,7 @@ def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
         return sol
     
     
-    # handle unsupported objects
+    # Handle unsupported objects
     #---------------------------------------------------------------------------------------------------            
     else:
         raise Exception("'wave' parameter must be given as a wavecalc wave or (3,1) numpy.ndarray")
@@ -223,7 +226,8 @@ def modes(ob,med,k0=None,verbose=None):
     #                                                                                                  #
     ####################################################################################################
 
-    # handle (3,1) arrays as vector input
+
+    # Handle (3,1) arrays for ob input
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,numpy.ndarray):
         if not numpy.shape(ob)==(3,1):
@@ -244,7 +248,8 @@ def modes(ob,med,k0=None,verbose=None):
         else:
             raise Exception("med must be given as a wavecalc medium or (3,3) numpy.ndarray")
                 
-    # handle wavecalc waves as vector input
+            
+    # Handle wavecalc waves for ob input
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,wavecalc.classes.wave):
         if not numpy.shape(ob.kvec)==(3,1):
@@ -266,19 +271,20 @@ def modes(ob,med,k0=None,verbose=None):
             raise Exception("med must be given as a wavecalc medium or (3,3) numpy.ndarray")
     
     
-    # handle unsupported ob instances
+    # Handle unsupported ob types
     #---------------------------------------------------------------------------------------------------            
     else:
         raise Exception("ob must be given as a wavecalc wave or (3,1) numpy.ndarray")
     
     
-    # verify the wave vector is real
+    # Verify the wave vector is real
     #---------------------------------------------------------------------------------------------------
     realvec = vec.real
     if not realvec is vec:
         raise Exception("Wave vector must be real")
     
-    # get the solution
+    
+    # Get the solution
     #---------------------------------------------------------------------------------------------------    
     else:
         return aux_modecalc(vec,medi,k0,verbose)
@@ -319,7 +325,8 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     # The rotation function for wavecalc object classes.                                               #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #      ob - The input object to be rotated, either a wave, surface, or medium.                     #
+    #      ob - The input object to be rotated, either a wavecalc object, (3,1) numpy ndarray or (3,3) #
+    #           numpy ndarray.                                                                         #
     #     ang - The angle of rotation in degrees, given as an int or a float.                          #
     #    axis - The axis about which the rotation is to be performed, either 'x', 'y', or 'z'.         #
     # medmove - If set to 'with', the media associated with waves and surfaces rotates as well. If set #
@@ -337,7 +344,9 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     #                                                                                                  #
     ####################################################################################################
     
-    ### Raise exception for invalid 'medmove' settings
+    
+    # Reset 'medmove' to None for invalid 'medmove' inputs
+    #---------------------------------------------------------------------------------------------------
     medmove_opts = set([None,'with','only','onlyinto','onlyout','into','out'])
     if medmove not in medmove_opts:
         str1 = "If specified, 'medmove' must be set to one of the following: \n"
@@ -346,16 +355,21 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
         print(str1+str2+str3)
         medmove = None
         
-    ### Handle (3,) numpy arrays
+        
+    # Handle (3,1) numpy ndarrays as ob input
+    #---------------------------------------------------------------------------------------------------
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,1):
         return aux_rotvec(ob,ang,axis)
         
-    ### Handle (3,3) numpy arrays
+    
+    # Handle (3,3) numpy ndarrays as ob input
+    #---------------------------------------------------------------------------------------------------
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,3):
         return aux_rottens(ob,ang,axis)
         
         
-    ### Handle wave instances
+    # Handle wavecalc wave instances as ob input
+    #---------------------------------------------------------------------------------------------------
     if isinstance(ob,wavecalc.classes.wave):
         if not aux_goodtest(ob):
             raise Exception('Your wavecalc wave has improper attributes')
@@ -380,7 +394,9 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
             print('New medium :',mm)
         return wavecalc.classes.wave(kvec=kk,efield=ee,medium=mm)
     
-    ### Handle surface instances
+    
+    # Handle wavecalc surface instances as ob input
+    #---------------------------------------------------------------------------------------------------
     elif isinstance(ob,wavecalc.classes.surface):
         if not aux_goodtest(ob):
             raise Exception('Your wavecalc surface has improper attributes')
@@ -408,8 +424,10 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
             print('New out :',ii)
             print('New int :',oo)
         return wavecalc.classes.surface(normal=nn,into=ii,out=oo)
-       
-    ### Handle medium instances        
+    
+    
+    # Handle wavecalc medium instances as ob input
+    #---------------------------------------------------------------------------------------------------        
     elif isinstance(ob,wavecalc.classes.medium):
         if not aux_goodtest(ob):
             raise Exception('Your wavecalc medium has improper attributes')
@@ -422,7 +440,9 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
             print('epsilon :',ee)
         return wavecalc.classes.medium(epsilon=ee)
     
-    ### Handle unsupported object instances
+    
+    # Handle unsupported object inputs
+    #---------------------------------------------------------------------------------------------------
     else:
         raise Exception("Argument 'ob' must be a (3,1) numpy array, (3,3) numpy array, or a wavecalc wave, surface, or medium")
 #
@@ -462,16 +482,17 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
     # The wave reflection function.                                                                    #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #          wav - The input wave, given as a wavecalc wave object.                                       #
-    #         surf - The surface normal, given as a wavecalc surface object.                                #
-    #           k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
-    #                as an int or a float.                                                                  #
-    #         coat - An option to make the surface AR or HR coated with strings 'AR' and 'HR' respectively. #    
-    # combine_same -                                                                                   #
-    #      verbose - If set to True, prints more information about the calculation.                         #
+    #          wav - The input wave, given as a wavecalc wave object.                                  #
+    #         surf - The surface normal, given as a wavecalc surface object.                           #
+    #           k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results,   #
+    #                given as an int or a float.                                                       #
+    #         coat - An option to make the surface AR or HR coated with strings 'AR' and 'HR'.         #    
+    # combine_same - An option that if set to True will combine waves that have very similar wave      #
+    #                vectors.                                                                          #                                                                                  
+    #      verbose - If set to True, prints more information about the calculation.                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs a (2,) list of reflection wavecalc wave objects.                                         #
+    # Outputs a list of up to two reflection wavecalc wave objects.                                    #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: June 2, 2019                                                                       #
@@ -479,6 +500,8 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
     ####################################################################################################
     
     
+    # Handle the coating choice
+    #---------------------------------------------------------------------------------------------------
     coats=['AR','ar','HR','hr']
     if coat is not None and coat not in coats:
         coat = None
@@ -487,7 +510,7 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         combine_same = False
     
     
-    # handle k0
+    # Handle k0
     #---------------------------------------------------------------------------------------------------
     if k0 is None:
         k0 = 1
@@ -495,7 +518,7 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("If specified, 'k0' must be an int or float")
     
     
-    # handle wav
+    # Handle wav
     #---------------------------------------------------------------------------------------------------
     if (isinstance(wav,wavecalc.classes.wave) 
             and aux_goodtest(wav) 
@@ -509,7 +532,7 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("The 'wav' input must be a wavecalc wave with proper kvec attribute")
         
     
-    # handle surf
+    # Handle surf
     #---------------------------------------------------------------------------------------------------
     if (isinstance(surf,wavecalc.classes.surface) 
                 and aux_goodtest(surf) 
@@ -523,8 +546,7 @@ def reflect(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("The 'surf' input must be a wavecalc surface with proper normal, out, and into attributes")
     
     
-    
-    # get the output
+    # Get the output
     #---------------------------------------------------------------------------------------------------
     sol = aux_waveinterf(k,ef,s,ep1,ep2,k0,act='refl',coating=coat,same=combine_same,verbose=verbose)     
     return sol
@@ -565,16 +587,17 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
     # The wave transmission function.                                                                  #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #     wav - The input wave, given as a wavecalc wave object.                                       #
-    #    surf - The surface normal, given as a wavecalc surface object.                                #
-    #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
-    #           as an int or a float.                                                                  #
-    #    coat - An option to make the surface AR or HR coated with strings 'AR' and 'HR' respectively. #
-    # combine_same -                                                                                   #                                                                  
-    # verbose - If set to True, prints more information about the calculation.                         #
+    #          wav - The input wave, given as a wavecalc wave object.                                  #
+    #         surf - The surface normal, given as a wavecalc surface object.                           #
+    #           k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results,   #
+    #                given as an int or a float.                                                       #
+    #         coat - An option to make the surface AR or HR coated with strings 'AR' and 'HR'.         #
+    # combine_same - An option that if set to True will combine waves that have very similar wave      #
+    #                vectors.                                                                          #                                                                                                                                                   
+    #      verbose - If set to True, prints more information about the calculation.                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs a (2,) list of transmitted wavecalc wave objects.                                        #
+    # Outputs a list of up to two transmitted wavecalc wave objects.                                   #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: June 1, 2019                                                                       #
@@ -582,6 +605,8 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
     ####################################################################################################
     
     
+    # Handle the coating choice
+    #---------------------------------------------------------------------------------------------------
     coats=['AR','ar','HR','hr']    
     if coat is not None and coat not in coats:
         coat = None
@@ -591,7 +616,7 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         combine_same = False
     
     
-    # handle k0
+    # Handle k0
     #---------------------------------------------------------------------------------------------------
     if k0 is None:
         k0 = 1
@@ -599,7 +624,7 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("If specified, 'k0' must be an int or float")
     
     
-    # handle wav
+    # Handle wav
     #---------------------------------------------------------------------------------------------------
     if (isinstance(wav,wavecalc.classes.wave) 
             and aux_goodtest(wav) 
@@ -613,7 +638,7 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("The 'wav' input must be a wavecalc wave with proper kvec attribute")
         
     
-    # handle surf
+    # Handle surf
     #---------------------------------------------------------------------------------------------------
     if (isinstance(surf,wavecalc.classes.surface) 
                 and aux_goodtest(surf) 
@@ -627,8 +652,7 @@ def transmit(wav,surf,k0=None,coat=None,combine_same=None,verbose=None):
         raise Exception("The 'surf' input must be a wavecalc surface with proper normal, out, and into attributes")
     
     
-    
-    # get the output
+    # Get the output
     #---------------------------------------------------------------------------------------------------
     sol = aux_waveinterf(k,ef,s,ep1,ep2,k0,act='trans',coating=coat,same=combine_same,verbose=verbose)        
     return sol
@@ -687,25 +711,28 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     ####################################################################################################
     
     
-    ### Compute the minors of epsilon 1 in the solution coordinates 
+    # Compute the minors of epsilon 1 in the solution coordinates
+    #---------------------------------------------------------------------------------------------------
     M1 = numpy.zeros([3,3],dtype=complex)
     for i in range(3):
         for j in range(3):
             minora = numpy.delete(med1,i,axis=0)
             minor = numpy.delete(minora,j,axis=1)
             M1[i,j] = numpy.linalg.det(minor)
-    ###
+            
     
-    ### Compute the minors of epsilon 2 in the solution coordinates
+    # Compute the minors of epsilon 2 in the solution coordinates
+    #---------------------------------------------------------------------------------------------------
     M2 = numpy.zeros([3,3],dtype=complex)
     for i in range(3):
         for j in range(3):
             minora = numpy.delete(med2,i,axis=0)
             minor = numpy.delete(minora,j,axis=1)
             M2[i,j] = numpy.linalg.det(minor)
-    ###
+   
     
-    ### Some convenient quantities to calculate
+    # Some convenient quantities to calculate
+    #---------------------------------------------------------------------------------------------------
     ID = numpy.array([[1,0,0],[0,1,0],[0,0,1]])
     
     detep1 = med1[0,0]*M1[0,0]-med1[0,1]*M1[0,1]+med1[0,2]*M1[0,2]
@@ -715,9 +742,10 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     detep2 = med2[0,0]*M2[0,0]-med2[0,1]*M2[0,1]+med2[0,2]*M2[0,2]
     sig2 = med2+med2.T
     delt2 = (med2[0,0]+med2[1,1]+med2[2,2])*ID-med2
-    ###
     
-    ### The coefficients of the quartic in kz/k0
+    
+    # The coefficients of the two (refl and trans) quartics in kz/k0
+    #---------------------------------------------------------------------------------------------------
     DELTA1 = kx*sig1[0,2]
     SIGMA1 = (kx**2)*delt1[1,1]-(M1[0,0]+M1[1,1])
     PSI1 = (kx**3)*sig1[0,2]+kx*(M1[0,2]+M1[2,0])
@@ -727,8 +755,10 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     SIGMA2 = (kx**2)*delt2[1,1]-(M2[0,0]+M2[1,1])
     PSI2 = (kx**3)*sig2[0,2]+kx*(M2[0,2]+M2[2,0])
     GAMMA2 = (kx**4)*med2[0,0]-(kx**2)*(M2[1,1]+M2[2,2])+detep2
-    ###
+   
     
+    # Verbosity
+    #---------------------------------------------------------------------------------------------------
     if verbose==True:
         print('DELTA_r =',DELTA1)
         print("SIGMA_r =",SIGMA1)
@@ -741,7 +771,8 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     
     
     
-    ### Roots of the quartic
+    # Roots of the quartics
+    #---------------------------------------------------------------------------------------------------
     coeffs_low_to_high_1 = [GAMMA1,PSI1,SIGMA1,DELTA1,med1[2,2]]
     coeffs_low_to_high_2 = [GAMMA2,PSI2,SIGMA2,DELTA2,med2[2,2]]
     kzs1 = numpy.polynomial.polynomial.polyroots(coeffs_low_to_high_1)
@@ -751,19 +782,31 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     
     kzout = [kzs1[0],kzs1[1],kzs2[2],kzs2[3]]
     
+    
+    # Eliminate small imaginary numerical junk
+    #---------------------------------------------------------------------------------------------------
     for i in range(4):
         if kzout[i].imag < 1e-10:
             kzout[i] = kzout[i].real
     
+    
+    # Verbosity
+    #---------------------------------------------------------------------------------------------------
     if verbose==True:
         print("Quartic roots are approximated as: ",kzout)
         
+    
+    # Verify that the roots have been properly solved for
+    #---------------------------------------------------------------------------------------------------
     if not aux_quarttest(coeffs_low_to_high_1,kzs1):
         raise Exception("Quartic root solver failed to sufficiently approximate reflection roots")
         
     if not aux_quarttest(coeffs_low_to_high_2,kzs2):
         raise Exception("Quartic root solver failed to sufficiently approximate transmission roots")
-        
+    
+    
+    # Return the roots
+    #---------------------------------------------------------------------------------------------------
     return kzout
 #
 #
@@ -794,24 +837,30 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
 #         
 #    
 def aux_check_same(lis,switch=None):
-    ''' A behind-the-scenes function for checking whether wavecalc waves have the same kvec '''
+    ''' A behind-the-scenes function for combining waves with the same wave vector '''
     
    
     ####################################################################################################
     #                                                                                                  #
-    # The sameness test                                                                                #
+    # The sameness checker                                                                             #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #  ob - The wavecalc object to be tested                                                           #
+    #    lis - A list of two or four wavecalc waves to be tested for sameness.                         #
+    # switch - An option for running the sameness checker. If set to False, the function returns its   #
+    #         input.                                                                                   #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs True if the object is well formed, and False otherwise                                   #
+    # Outputs the input list with like wave vector waves combined. Only compares lis[0] to lis[1], and #
+    # lis[2] to lis[3], and vice versa. Does not compare lis[0] to lis[3], for example.                #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: June 2, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
+    
+    # Handle te switch options
+    #---------------------------------------------------------------------------------------------------
     if switch is False:
         return lis
     
@@ -819,7 +868,7 @@ def aux_check_same(lis,switch=None):
         ell = len(lis)
         LIS = []
         
-        # handle when lis is two waves
+        # Handle when lis is two waves
         #-----------------------------------------------------------------------------------------------
         if ell == 2:
             E1 = lis[0]
@@ -842,7 +891,7 @@ def aux_check_same(lis,switch=None):
             return LIS
         
         
-        # handle when lis is four waves
+        # Handle when lis is four waves
         #-----------------------------------------------------------------------------------------------
         else:
             E1 = lis[0]
@@ -928,9 +977,13 @@ def aux_clean(ob,tolerance=None):
     #                                                                                                  #
     ####################################################################################################
     
+    
+    # Clone the input object
+    #---------------------------------------------------------------------------------------------------
     dummy = ob
     
-    # determine the tolerance
+    
+    # Handle the tolerance input
     #---------------------------------------------------------------------------------------------------
     if tolerance is None:
         tol = 1e-8
@@ -940,18 +993,19 @@ def aux_clean(ob,tolerance=None):
         raise Exception("tolerance can only be specified as a float or an int")
         
         
-    # determine the digits
+    # Determine the digits
     #---------------------------------------------------------------------------------------------------
     dig = -round(numpy.log(tol)/numpy.log(10)) 
     dig = int(dig)
     
     
-    # handle Nonetype
+    # Handle Nonetype input for ob
     #---------------------------------------------------------------------------------------------------
     if ob is None:
         return None
     
-    # handle (3,1)
+    
+    # Handle (3,1) numpy ndarray as ob input
     #---------------------------------------------------------------------------------------------------
     elif numpy.shape(ob)==(3,1):
         for i in range(3):
@@ -963,7 +1017,8 @@ def aux_clean(ob,tolerance=None):
             dummy[i,0] = round(dummy[i,0],digg+1)
         return dummy
     
-    # handle (3,3)
+    
+    # Handle (3,3) numpy ndarray as ob input
     #---------------------------------------------------------------------------------------------------
     else:
         for i in range(3):
@@ -1009,30 +1064,41 @@ def aux_coat_handle(Ein,Ea,Eb,Eg,En,ep1,ep2,coat):
    
     ####################################################################################################
     #                                                                                                  #
-    # The cleaning function                                                                            #
+    # The coating function                                                                             #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #        ob - The object to be cleaned, either a (3,1) or (3,3) numpy ndarray                      #
-    # tolerance - The tolerance to consider when cleaning, as a float or int. Defaults to 1e-8.        #
+    #  Ein - The incident wave, as a (3,1) numpy ndarray.                                              #
+    #   Ea - The alpha wave, as a (3,1) numpy ndarray.                                                 #
+    #   Eb - The beta wave, as a (3,1) numpy ndarray.                                                  #
+    #   Eg - The gamma wave, as a (3,1) numpy ndarray.                                                 #
+    #   En - The nu wave, as a (3,1) numpy ndarray.                                                    #
+    #  ep1 - The incident/reflection material dielectric tensor, as a (3,3) numpy ndarray.             #
+    #  ep2 - The refraction/transmission material dielectric tensor, as a (3,3) numpy ndarray.         #
+    # coat - An option to make the surface AR or HR coated with strings 'AR' and 'HR'.                 #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs the cleaned version of the object, for a given tolerance                                 #
+    # Outputs a list of the reflection and transmission fields after adjusting amplitudes to           #
+    # correspond with coating properties.                                                              #
     #                                                                                                  # 
     #                                                                                                  #
     # Last Updated: June 2, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
     
+    
+    # The energy density of the incident wave
+    #---------------------------------------------------------------------------------------------------
     dfield_inc = ep1 @ Ein
     u_inc = (numpy.conj(Ein).T @ dfield_inc)[0,0].real
     
-    # handle the case of no coating
+    
+    # Handle the case of no coating
     #---------------------------------------------------------------------------------------------------
     if coat is None:
         return [Ea,Eb,Eg,En]
     
     
-    # handle the AR case
+    # Handle the AR case
     #---------------------------------------------------------------------------------------------------
     elif coat == 'ar' or coat == 'AR':
         Ea = numpy.array([[0.,0.,0.]]).T
@@ -1047,7 +1113,7 @@ def aux_coat_handle(Ein,Ea,Eb,Eg,En,ep1,ep2,coat):
         return [Ea,Eb,Eg,En] 
         
         
-    # handle the HR case    
+    # Handle the HR case    
     #---------------------------------------------------------------------------------------------------
     else:
         Eg = numpy.array([[0.,0.,0.]]).T
@@ -1110,6 +1176,9 @@ def aux_coord_transform(k,s,verbose=None):
     #                                                                                                  #
     ####################################################################################################   
     
+    
+    # Normalize the surface vector, set zp to s, and find the magnitude of the wave vector
+    #---------------------------------------------------------------------------------------------------
     sstar = numpy.conj(s)
     snorm = numpy.sqrt((sstar.T @ s)[0,0]).real
     S = s/snorm
@@ -1132,37 +1201,52 @@ def aux_coord_transform(k,s,verbose=None):
     xpastar = numpy.conj(xpa)
     xnorm = numpy.sqrt((xpastar.T @ xpa)[0,0]).real
     
+    
     # Handle when k and s are parallel 
     #---------------------------------------------------------------------------------------------------
     if xnorm<1e-14:
-        ### Consider when a component of zp is zero:
-        if len(numpy.where(zp<1e-14)[0])>0:
-            ### Case where 1 is zero:
-            if len(numpy.where(zp<1e-14)[0])==0:
-                goods = numpy.where(zp>1e-14)[0]
-                xpa = numpy.zeros([3,1])
-                xpa[goods[0]] = -zp[goods[1]]/zp[goods[0]]
-                xpa[goods[1]] = 1
-                xpastar = numpy.conj(xpa)
-                newnorm = numpy.sqrt((xpastar.T @ xpa)[0,0].real)   
-                xp = xpa/newnorm
-            ### Other case is 2 are zero (all three can't be zero):
-            else:
-                good = numpy.where(zp<1e-14)[0]
-                xpa = numpy.zeros([3,1])
-                xpa[good[0]] = 1
-                xp = xpa
+        
+        xpa = numpy.array([[0.,0.,0.]]).T
+        full_index = numpy.array([0,1,2])
+        where_zeros = numpy.where(zp<1e-14)[0]
+        where_not = numpy.setdiff1d(full_index,where_zeros)
+        num_zeros = len(where_zeros)
+        
+        # Case where only 1 component of zp is non-zero
+        #-----------------------------------------------------------------------------------------------
+        if num_zeros==2:
+            j_ind = where_zeros[0]
+            xpa[j_ind,0] = 1  
+            xp = xpa
+            
+        # Case where at least two components of zp are non-zero
+        #-----------------------------------------------------------------------------------------------
+        else:
+            ij = where_not[:2]
+            i_ind = ij[0]
+            j_ind = ij[1]
+            xpa[i_ind,0] = 1
+            xpa[j_ind,0] = -zp[i_ind,0]/zp[j_ind,0]
+            xpastar = numpy.conj(xpa)
+            newnorm = numpy.sqrt(1+(zp[i_ind,0]/zp[j_ind,0])**2)  
+            xp = xpa/newnorm
                 
-    #################################################################
-    
+    # Else when k and s are not parallel 
+    #---------------------------------------------------------------------------------------------------
     else:
         xp=xpa/xnorm
-        
-        
+    
     yp = numpy.cross(zp.T,xp.T).T
+    
+    
+    # Determine the transformation matrix and its indices
+    #---------------------------------------------------------------------------------------------------    
     U = numpy.array([[xp[0,0],yp[0,0],zp[0,0]],[xp[1,0],yp[1,0],zp[1,0]],[xp[2,0],yp[2,0],zp[2,0]]])
     Uinv = numpy.linalg.inv(U)
     
+    
+    # Verbosity
+    #---------------------------------------------------------------------------------------------------
     if verbose==True:
         print("x' =",xp)
         print("y' =",yp)
@@ -1170,7 +1254,10 @@ def aux_coord_transform(k,s,verbose=None):
         print('k_hat . s_hat = ',kdotS/knorm)
         print('U = ',U)
         print('Uinv = ',Uinv)
-        
+    
+
+    # Return the transform matrices
+    #---------------------------------------------------------------------------------------------------
     return [U,Uinv]
 #
 #
@@ -1230,36 +1317,56 @@ def aux_field_match(k_alpha,k_beta,k_gamma,k_nu,alpha,beta,gamma,nu,kin,Ein,verb
     ####################################################################################################
     
     
+    # Initialize the system matrix and result vector 
+    #---------------------------------------------------------------------------------------------------
     M = numpy.zeros([4,4],dtype=complex)
     b = numpy.zeros([4],dtype=complex)
     
+    
+    # The first row of the system matrix
+    #---------------------------------------------------------------------------------------------------
     M[0,0] = alpha[0,0]
     M[0,1] = beta[0,0]
     M[0,2] = -gamma[0,0]
     M[0,3] = -nu[0,0]
     
+    # The second row of the system matrix
+    #---------------------------------------------------------------------------------------------------
     M[1,0] = alpha[1,0]
     M[1,1] = beta[1,0]
     M[1,2] = -gamma[1,0]
     M[1,3] = -nu[1,0]
     
+    # The third row of the system matrix
+    #---------------------------------------------------------------------------------------------------
     M[2,0] = k_alpha[2,0]*alpha[1,0]
     M[2,1] = k_beta[2,0]*beta[1,0]
     M[2,2] = -k_gamma[2,0]*gamma[1,0]
     M[2,3] = -k_nu[2,0]*nu[1,0]
     
+    # The fourth row of the system matrix
+    #---------------------------------------------------------------------------------------------------
     M[3,0] = k_alpha[2,0]*alpha[0,0] - k_alpha[0,0]*alpha[2,0]
     M[3,1] = k_beta[2,0]*beta[0,0] - k_beta[0,0]*beta[2,0]
     M[3,2] = k_gamma[0,0]*gamma[2,0] - k_gamma[2,0]*gamma[0,0]
     M[3,3] = k_nu[0,0]*nu[2,0] - k_nu[2,0]*nu[0,0]
     
+    
+    # The result vector
+    #---------------------------------------------------------------------------------------------------
     b[0] = -Ein[0,0]
     b[1] = -Ein[1,0]
     b[2] = -kin[2,0]*Ein[1,0]
     b[3] = kin[0,0]*Ein[2,0]-kin[2,0]*Ein[0,0]
     
+    
+    # Get the solution vector
+    #---------------------------------------------------------------------------------------------------
     sol = numpy.linalg.solve(M,b)
     
+    
+    # Return the solution vector
+    #---------------------------------------------------------------------------------------------------
     return sol
 #
 #
@@ -2420,8 +2527,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     
     
     # adjust the field vectors to account for the surface coating
-    #---------------------------------------------------------------------------------------------------
-    
+    #---------------------------------------------------------------------------------------------------  
     out = aux_coat_handle(ef,alpha_ef,beta_ef,gamma_ef,nu_ef,ep1,ep2,coating)
     
     alpha_ef = out[0]
@@ -2438,7 +2544,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     nu_wave = wavecalc.classes.wave(kvec=k_nu,efield=nu_ef,medium=ep2)
     
     
-    # create the solution sets
+    # create the solution sets and eliminate redunancies if necessary
     #---------------------------------------------------------------------------------------------------
     both = aux_check_same([alpha_wave,beta_wave,gamma_wave,nu_wave],switch=same)
     refls = aux_check_same([alpha_wave,beta_wave],switch=same)

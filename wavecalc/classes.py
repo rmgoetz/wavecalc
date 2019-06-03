@@ -495,7 +495,7 @@ class example_class:
         if everything is False:
             self.example_attribute = None
             
-        elif example_attribute is 'random':
+        elif example_attribute == 'random':
             self.example_attribute = random.rand()
             
         else:
