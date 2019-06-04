@@ -2528,7 +2528,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     
     # adjust the field vectors to account for the surface coating
     #---------------------------------------------------------------------------------------------------  
-    out = aux_coat_handle(ef,alpha_ef,beta_ef,gamma_ef,nu_ef,ep1,ep2,coating)
+    out = aux_coat_handle(Ein=ef,Ea=alpha_ef,Eb=beta_ef,Eg=gamma_ef,En=nu_ef,ep1=ep1,ep2=ep2,coat=coating)
     
     alpha_ef = out[0]
     beta_ef = out[1]

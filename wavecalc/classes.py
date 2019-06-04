@@ -90,9 +90,10 @@ class wave:
         else:
             raise Exception("Must specify medium as a (3,3) numpy.ndarray, 'random', False, or None")
             
-            
-                
-     
+                    
+    
+    # Custom methods            
+    #-----------------------------------------------------------------------------------------
     def pol(self,polar=None):
         if polar is None:
             if type(self.efield) is numpy.ndarray and numpy.shape(self.efield) == (3,1):
@@ -131,48 +132,9 @@ class wave:
         else:
             raise Exception("New amplitude must be an int or a float")
             
-            
-            
-    def __add__(self,other):
-        if isinstance(other,wavecalc.classes.medium):
-            new = self
-            new.medium = other.epsilon
-            return new
-        elif isinstance(other,wavecalc.classes.surface):
-            return reflect(self,other,coat=other.coat)
-        else:
-            raise Exception("Waves can only add with media or surfaces")
-    
-        
-        
-    def __sub__(self,other):
-        if isinstance(other,wavecalc.classes.surface):
-            return transmit(self,other)
-        else:
-            raise Exception("Waves can only subtract surfaces")
-            
-            
-    def __neg__(self):
-        if (isinstance(self.kvec,numpy.ndarray) 
-            and numpy.shape(self.kvec) == (3,1)):
-            new = self
-            new.kvec = -self.kvec
-            return new
-        else:
-            raise Exception("Wave must have a properly formed kvec to be negated")
-            
-    
-    def __matmul__(self,other):
-        if isinstance(other,wavecalc.classes.surface):
-            return crash(self,other,coat=other.coat,combine_same=True)
-        else:
-            raise Exception("Waves can only crash onto surfaces")
-
-        
-        
+     
     def poynting(self):
         return print('Need to add a Poynting attribute')
-
 
 
     def rotate(self,ang,axis=None,medmove=None,verbose=None):
@@ -212,7 +174,61 @@ class wave:
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
 
+    
+        
+    
+    # Overloaded methods            
+    #-----------------------------------------------------------------------------------------
+    def __add__(self,other):
+        if isinstance(other,wavecalc.classes.medium):
+            new = self
+            new.medium = other.epsilon
+            return new
+        elif isinstance(other,wavecalc.classes.surface):
+            return reflect(self,other,coat=other.coat)
+        else:
+            raise Exception("Waves can only add with media or surfaces")
+     
+        
+    def __sub__(self,other):
+        if isinstance(other,wavecalc.classes.surface):
+            return transmit(self,other)
+        else:
+            raise Exception("Waves can only subtract surfaces")
+            
+            
+    def __neg__(self):
+        if (isinstance(self.kvec,numpy.ndarray) 
+            and numpy.shape(self.kvec) == (3,1)):
+            new = self
+            new.kvec = -self.kvec
+            return new
+        else:
+            raise Exception("Wave must have a properly formed kvec to be negated")
+            
+    
+    def __matmul__(self,other):
+        if isinstance(other,wavecalc.classes.surface):
+            return crash(self,other,coat=other.coat,combine_same=True)
+        else:
+            raise Exception("Waves can only crash onto surfaces")
+            
+    
+    def __eq__(self,other):
+        if isinstance(other,wavecalc.classes.wave):
+            ks = numpy.prod(self.kvec == other.kvec)
+            es = numpy.prod(self.efield == other.efield)
+            ms = numpy.prod(self.medium == other.medium)
+            if ks*es*ms:
+                return True
+            else:
+                return False
+        else:
+            return False
 
+        
+        
+    
 
 class surface:
     ''' A class for planar interfaces '''
@@ -294,7 +310,16 @@ class surface:
         else:
             self.coat = None
             
-            
+    
+    # Custom methods            
+    #-----------------------------------------------------------------------------------------
+    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+        rotate_copy(self,ang,axis,medmove,verbose)
+
+
+
+    # Overloaded methods            
+    #-----------------------------------------------------------------------------------------        
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
             new = self
@@ -339,9 +364,22 @@ class surface:
         return surface(normal=self.normal,into=self.out,out=self.into)
     
     
+    def __eq__(self,other):
+        if isinstance(other,wavecalc.classes.surface):
+            ns = numpy.prod(self.normal == other.normal)
+            os = numpy.prod(self.out == other.out)
+            Is = numpy.prod(self.into == other.into)
+            cs = numpy.prod(self.coat == other.coat)
+            if ns*os*Is*cs:
+                return True
+            else:
+                return False
+        else:
+            return False
     
-    def rotate(self,ang,axis=None,medmove=None,verbose=None):
-        rotate_copy(self,ang,axis,medmove,verbose)
+    
+    
+
         
             
         
@@ -409,9 +447,9 @@ class medium:
             raise Exception('Must specify epsilon as a (3,3) numpy.ndarray')
     
     
-    
-    
-
+        
+    # Custom methods            
+    #-----------------------------------------------------------------------------------------
     def epx(self,epsilon_xx):
         if (not isinstance(self.epsilon,numpy.ndarray) 
             or not numpy.shape(self.epsilon)==(3,3)):
@@ -450,13 +488,16 @@ class medium:
             raise Exception("Epsilon_zz must be an int, float, or complex")
 
 
+    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+        rotate_copy(self,ang,axis,medmove,verbose)
 
 
 
 
 
 
-        
+    # Overloaded methods            
+    #-----------------------------------------------------------------------------------------    
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
             return surface(out=self.epsilon,into=other.epsilon)
@@ -481,12 +522,27 @@ class medium:
             return new
         else:
             raise Exception('Cannot add a medium to a non-medium')
+            
+            
+    def __eq__(self,other):
+        if isinstance(other,wavecalc.classes.medium):
+            es = numpy.prod(self.epsilon == other.epsilon)
+            if es:
+                return True
+            else:
+                return False
+        else:
+            return False
         
                 
-    def rotate(self,ang,axis=None,medmove=None,verbose=None):
-        rotate_copy(self,ang,axis,medmove,verbose)
-        
 
+
+'''
+class waveset:
+    def __init__
+
+        
+'''
 
 
 class example_class:
