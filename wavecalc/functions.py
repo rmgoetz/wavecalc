@@ -40,6 +40,12 @@ Table of Contents:
         
         aux_goodtest -------------------------- Line 1430
         
+        aux_goodtest_wav ---------------------- Line
+        
+        aux_goodtest_surf --------------------- Line
+        
+        aux_goodtest_med ---------------------- Line
+        
         aux_maxwell_eigenvec ------------------ Line 1542
         
         aux_modecalc -------------------------- Line 1647
@@ -98,14 +104,24 @@ def crash(wave,surface,k0=None,coat=None,combine_same=None,verbose=None):
     # Last Updated: June 2, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
- 
+    
+    
+    # Handle bad surface objects - necessary for the coating handling
+    #---------------------------------------------------------------------------------------------------
+    if not aux_goodtest(surface,'surface'):
+        raise Exception("'surface' argument is not a properly formed wavecalc surface")
+    
     
     # Handle the coating choice
     #---------------------------------------------------------------------------------------------------
-    coats=['AR','ar','HR','hr']  
-    if coat is not None and coat not in coats:
+    if coat is False:
         coat = None
+    elif coat not in ['AR','ar','HR','hr']:
+        coat = surface.coat
         
+    
+    # Handle the combine_same option
+    #---------------------------------------------------------------------------------------------------
     if not (combine_same is True or combine_same is False):
         combine_same = False
     
@@ -1433,6 +1449,9 @@ def aux_fixmode(wave=None,ab=None,k0=None,verbose=None):
     
     if ab is None:
         ab = 0
+        
+    if ab != 0 and ab != 1:
+        ab = 0
     
     if k0 is None:
         k0 = 1
@@ -1532,7 +1551,7 @@ def aux_fixmode(wave=None,ab=None,k0=None,verbose=None):
 #
 #         
 #    
-def aux_goodtest(ob):
+def aux_goodtest(ob,test_type=None):
     ''' A behind-the-scenes function for testing whether wavecalc objects have proper attributes '''
     
    
@@ -1541,81 +1560,258 @@ def aux_goodtest(ob):
     # The goodness test                                                                                #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #  ob - The wavecalc object to be tested                                                           #
+    #        ob - The wavecalc object to be tested.                                                    #       
+    # test_type - An option to specify what type the object should be, either 'wave', 'surface', or    #
+    #            'medium'.                                                                             #
     #                                                                                                  # 
     #                                                                                                  #
     # Outputs True if the object is well formed, and False otherwise                                   #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 22, 2019                                                                       #
+    # Last Updated: June 5, 2019                                                                       #
     #                                                                                                  #
     ####################################################################################################
+    
+    
+    # Handle improper arguments
+    #---------------------------------------------------------------------------------------------------
     if (not isinstance(ob,(wavecalc.classes.wave,wavecalc.classes.surface,wavecalc.classes.medium)) 
         and ob is not None):
         raise Exception("Non-wavecalc object passed as argument")
     
-    ### Handle wave instances
+    
+    # Handle if the test type is specified
+    #---------------------------------------------------------------------------------------------------    
+    types_to_test = ['wave','surface','medium']
+    if test_type in types_to_test:
+        if ob is None:
+            return False
+        elif test_type == 'wave':
+            return aux_goodtest_wav(ob)
+        elif test_type == 'surface':
+            return aux_goodtest_surf(ob)
+        else:
+            return aux_goodtest_med(ob)
+   
+
+    # Handle if test type is unspecified and object is a wave
+    #---------------------------------------------------------------------------------------------------     
     elif isinstance(ob,wavecalc.classes.wave):
-        if ob.kvec is None or (str(type(ob.kvec)) == "<class 'numpy.ndarray'>" 
-                               and numpy.shape(ob.kvec) == (3,1)):
-            ktest = True
-        else:
-            ktest = False
-        
-        
-        if ob.efield is None or (str(type(ob.efield)) == "<class 'numpy.ndarray'>" 
-                                 and numpy.shape(ob.efield) == (3,1)):
-            etest = True
-        else:
-            etest = False
-        
-        if ob.medium is None or (str(type(ob.medium)) == "<class 'numpy.ndarray'>" 
-                                and numpy.shape(ob.medium) == (3,3)):
-            mtest = True
-        else:
-            mtest = False
-        
-        good = ktest*etest*mtest
-        return good
+        return aux_goodtest_wav(ob)
     
-    ### Handle surface instances
+    
+    # Handle if test type is unspecified and object is a surface
+    #---------------------------------------------------------------------------------------------------
     elif isinstance(ob,wavecalc.classes.surface):
-        if ob.normal is None or (str(type(ob.normal)) == "<class 'numpy.ndarray'>" 
-                                 and numpy.shape(ob.normal) == (3,1)):
-            ntest = True
-        else:
-            ntest = False
-        
-        
-        if ob.out is None or (str(type(ob.out)) == "<class 'numpy.ndarray'>" 
-                              and numpy.shape(ob.out) == (3,3)):
-            otest = True
-        else:
-            otest = False
-            
-        
-        if ob.into is None or (str(type(ob.into)) == "<class 'numpy.ndarray'>" 
-                               and numpy.shape(ob.into) == (3,3)):
-            itest = True
-        else:
-            itest = False
-            
-        good = ntest*otest*itest
-        return good
-            
-    ### Handle media instances    
-    elif isinstance(ob,wavecalc.classes.medium):
-        if ob.epsilon is None or (str(type(ob.epsilon)) == "<class 'numpy.ndarray'>" 
-                                  and numpy.shape(ob.epsilon) == (3,3)):
-            eptest = True
-        else:
-            eptest = False
-        
-        return eptest
+        return aux_goodtest_surf(ob)
     
-    ### Handle None instances
+    
+    # Handle if test type is unspecified and object is a medium
+    #---------------------------------------------------------------------------------------------------
+    elif isinstance(ob,wavecalc.classes.medium):
+            return aux_goodtest_med(ob)
+    
+    
+    # Handle if test type is unspecified and object is None
+    #---------------------------------------------------------------------------------------------------
     else:
         return True
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_goodtest_wav(wav):
+    ''' A behind-the-scenes function for testing whether wavecalc wave objects have proper attributes '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The goodness test for waves                                                                      #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # wav - The wavecalc wave object to be tested.                                                     #       
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs True if the wave object is well formed, and False otherwise.                             #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 5, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    if wav.kvec is None or (type(wav.kvec) is numpy.ndarray 
+                               and numpy.shape(wav.kvec) == (3,1)):
+        ktest = True
+    else:
+        ktest = False
+        
+        
+    if wav.efield is None or (type(wav.efield) is numpy.ndarray 
+                                 and numpy.shape(wav.efield) == (3,1)):
+        etest = True
+    else:
+        etest = False
+        
+    if wav.medium is None or (type(wav.medium) is numpy.ndarray 
+                                and numpy.shape(wav.medium) == (3,3)):
+        mtest = True
+    else:
+        mtest = False
+        
+    good = ktest*etest*mtest
+    return good
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_goodtest_surf(surf):
+    ''' A behind-the-scenes function for testing whether wavecalc surface objects have proper attributes '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The goodness test for surfaces                                                                   #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # surf - The wavecalc surface object to be tested.                                                 #       
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs True if the surface object is well formed, and False otherwise.                          #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 5, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    if surf.normal is None or (type(surf.normal) is numpy.ndarray 
+                                 and numpy.shape(surf.normal) == (3,1)):
+        ntest = True
+    else:
+        ntest = False
+        
+        
+    if surf.out is None or (type(surf.out) is numpy.ndarray 
+                              and numpy.shape(surf.out) == (3,3)):
+        otest = True
+    else:
+        otest = False
+            
+        
+    if surf.into is None or (type(surf.into) is numpy.ndarray 
+                               and numpy.shape(surf.into) == (3,3)):
+        itest = True
+    else:
+        itest = False
+        
+    if surf.coat is None or surf.coat in ['hr','HR','ar','AR']:
+        ctest = True
+    else:
+        ctest = False
+            
+    good = ntest*otest*itest*ctest
+    return good
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_goodtest_med(med):
+    ''' A behind-the-scenes function for testing whether wavecalc medium objects have proper attributes '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The goodness test for media                                                                      #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # med - The wavecalc medium object to be tested.                                                   #       
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs True if the medium object is well formed, and False otherwise.                           #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 5, 2019                                                                       #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    if med.epsilon is None or (type(med.epsilon) is numpy.ndarray 
+                                  and numpy.shape(med.epsilon) == (3,3)):
+        eptest = True
+    else:
+        eptest = False
+        
+    return eptest
 #
 #
 #

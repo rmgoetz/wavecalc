@@ -181,8 +181,10 @@ class wave:
     #-----------------------------------------------------------------------------------------
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            new = self
-            new.medium = other.epsilon
+            kvec = self.kvec
+            efield = self.efield
+            medium = other.epsilon
+            new = wave(kvec=kvec,efield=efield,medium=medium)
             return new
         elif isinstance(other,wavecalc.classes.surface):
             return reflect(self,other,coat=other.coat)
@@ -200,8 +202,10 @@ class wave:
     def __neg__(self):
         if (isinstance(self.kvec,numpy.ndarray) 
             and numpy.shape(self.kvec) == (3,1)):
-            new = self
-            new.kvec = -self.kvec
+            kvec = -self.kvec
+            efield = self.efield
+            medium = self.medium
+            new = wave(kvec=kvec,efield=efield,medium=medium)
             return new
         else:
             raise Exception("Wave must have a properly formed kvec to be negated")
@@ -322,8 +326,11 @@ class surface:
     #-----------------------------------------------------------------------------------------        
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            new = self
-            new.into = other.epsilon
+            normal = self.normal
+            out = self.out
+            into = other.epsilon
+            coat = self.coat
+            new = surface(normal=normal,out=out,into=into,coat=coat) 
             return new
         elif isinstance(other,wavecalc.classes.wave):
             return transmit(other,self,coat=self.coat)
@@ -334,8 +341,11 @@ class surface:
         
     def __sub__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            new = self
-            new.out = other.epsilon
+            normal = self.normal
+            out = other.epsilon
+            into = self.into
+            coat = self.coat
+            new = surface(normal=normal,out=out,into=into,coat=coat)
             return new
         elif isinstance(other,wavecalc.classes.wave):
             return reflect(other,self,coat=self.coat)
@@ -346,8 +356,11 @@ class surface:
     def __neg__(self):
         if (isinstance(self.normal,numpy.ndarray) 
             and numpy.shape(self.normal) == (3,1)):
-            new = self
-            new.normal = -self.normal
+            normal = -self.normal
+            out = self.out
+            into = self.into
+            coat = self.coat
+            new = surface(normal=normal,out=out,into=into,coat=coat)
             return new
         else:
             raise Exception("Surface must have a properly defined normal")
@@ -361,7 +374,12 @@ class surface:
     
     
     def __invert__(self):
-        return surface(normal=self.normal,into=self.out,out=self.into)
+        normal = self.normal 
+        out = self.into
+        into = self.out
+        coat = self.coat
+        new = surface(normal=normal,out=out,into=into,coat=coat)
+        return new
     
     
     def __eq__(self,other):
@@ -502,12 +520,17 @@ class medium:
         if isinstance(other,wavecalc.classes.medium):
             return surface(out=self.epsilon,into=other.epsilon)
         elif isinstance(other,wavecalc.classes.surface):
-            new = other
-            new.out = self.epsilon
+            normal = other.normal 
+            out = self.epsilon
+            into = other.into
+            coat = other.coat
+            new = surface(normal=normal,out=out,into=into,coat=coat)
             return new
         elif isinstance(other,wavecalc.classes.wave):
-            new = other
-            new.medium = self.epsilon
+            kvec = other.kvec
+            efield = other.efield
+            medium = self.epsilon
+            new = wave(kvec=kvec,efield=efield,medium=medium)
             return new
         else:
             raise Exception('Cannot add a medium to a non-wavecalc objects')
@@ -517,8 +540,11 @@ class medium:
         if isinstance(other,wavecalc.classes.medium):
                 return surface(out=other.epsilon,into=self.epsilon)
         elif isinstance(other,wavecalc.classes.surface):
-            new = other
-            new.into = self.epsilon
+            normal = other.normal
+            out = other.out
+            into = self.epsilon
+            coat = other.coat
+            new = surface(normal=normal,out=out,into=into,coat=coat)
             return new
         else:
             raise Exception('Cannot add a medium to a non-medium')
