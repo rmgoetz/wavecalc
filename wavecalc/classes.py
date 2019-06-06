@@ -3,12 +3,85 @@
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 3, 2019 01:51 EST
+last update: June 6, 2019 10:37 EST
 """
+'''
+Table of Contents
+
+    wave Class -------------------------------- Line 66
+       
+        __init__ ------------------------------ Line
+        pol ----------------------------------- Line
+        amp ----------------------------------- Line
+        poynting ------------------------------ Line
+        rotate -------------------------------- Line
+        fixmode ------------------------------- Line
+        index --------------------------------- Line
+        clean --------------------------------- Line
+        __add__ ------------------------------- Line
+        __sub__ ------------------------------- Line
+        __pos__ ------------------------------- Line
+        __neg__ ------------------------------- Line
+        __matmul__ ---------------------------- Line
+        __eq__ -------------------------------- Line
+        
+       
+        
+    surface Class ----------------------------- Line 326
+    
+        __init__ ------------------------------ Line
+        rotate -------------------------------- Line
+        clean --------------------------------- Line
+        __add__ ------------------------------- Line
+        __sub__ ------------------------------- Line
+        __pos__ ------------------------------- Line
+        __neg__ ------------------------------- Line
+        __matmul__ ---------------------------- Line
+        __invert__ ---------------------------- Line
+        __eq__ -------------------------------- Line
+        
+        
+        
+    medium Class ------------------------------ Line 524
+
+        __init__ ------------------------------ Line
+        epx ----------------------------------- Line
+        epy ----------------------------------- Line
+        epz ----------------------------------- Line
+        ep_all -------------------------------- Line
+        rotate -------------------------------- Line
+        clean --------------------------------- Line
+        __add__ ------------------------------- Line
+        __pos__ ------------------------------- Line
+        __sub__ ------------------------------- Line
+        __eq__ -------------------------------- Line
+
+
+
+    bundle Class ------------------------------ Line
+    
+        __init__ ------------------------------ Line
+        append
+        __setitem__
+        
+        
+    
+    chain Class -------------------------------- Line
+    
+        __init__ ------------------------------- Line
+        append --------------------------------- Line
+        __setitem__ ---------------------------- Line
+
+
+Last line check June 6, 2019
+
+'''
+
 import wavecalc
 #from wavecalc import functions
 import numpy
 from numpy import random
+from collections import UserList
 from wavecalc.functions import aux_rotate_copy as rotate_copy
 from wavecalc.functions import transmit as transmit
 from wavecalc.functions import reflect as reflect
@@ -16,7 +89,6 @@ from wavecalc.functions import crash as crash
 from wavecalc.functions import aux_goodtest as goodtest
 from wavecalc.functions import aux_fixmode
 from wavecalc.functions import aux_clean 
-#
 
 
 class wave:
@@ -116,33 +188,47 @@ class wave:
             raise Exception("New polarization must be a (3, 1) numpy.ndarray")
         
         
-    def amp(self,ampl=None):
-        if ampl is None:
+        
+    def amp(self,amplitude=None):
+        if amplitude is None:
             if type(self.efield) is numpy.ndarray and numpy.shape(self.efield) == (3,1):
                 sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0]
                 norm = numpy.sqrt(sqr_mod)
                 return norm.real    
             else:
                 print("No electric field found")
-        elif isinstance(ampl,(int,float)):
+        elif isinstance(amplitude,(int,float)):
             sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0]
             norm = numpy.sqrt(sqr_mod)
             norm = norm.real
-            self.efield = (ampl/norm)*self.efield 
+            self.efield = (amplitude/norm)*self.efield 
         else:
             raise Exception("New amplitude must be an int or a float")
             
      
-    def poynting(self):
-        return print('Need to add a Poynting attribute')
+        
+    def poynting(self,scale=None):
+        if goodtest(self,test_type='wave'):
+            if scale is None or not isinstance(scale,(int,float)):
+                scale = 1
+            ee = self.efield
+            kk = self.kvec
+            hh = numpy.cross(kk.T,ee.T).T 
+            hhc = numpy.conj(hh)
+            S = 0.5*scale*numpy.cross(ee.T,hhc.T).T
+            return S
+        else:
+            raise Exception("Wave object is not well-formed, check for improper attributes")
 
 
-    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+
+    def rotate(self,ang,axis,medmove=None,verbose=None):
         rotate_copy(self,ang,axis,medmove,verbose)
         
     
+    
     def fixmode(self,ab=None,k0=None,verbose=None):
-        if goodtest(self):
+        if goodtest(self,test_type='wave'):
             back = aux_fixmode(wave=self,ab=ab,k0=k0,verbose=verbose)
             self.kvec = back[0]
             self.efield = back[1]
@@ -150,8 +236,9 @@ class wave:
             raise Exception("Wave object is not well-formed, check for improper attributes")
             
             
+            
     def index(self,k0=None):
-        if goodtest(self):
+        if goodtest(self,test_type='wave'):
             if k0 is None:
                 k0 = 1
             if numpy.shape(self.kvec) == (3,1):
@@ -164,6 +251,7 @@ class wave:
                 raise Exception("No wave vector found")
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
+          
             
     
     def clean(self,tol=None):
@@ -192,11 +280,24 @@ class wave:
             raise Exception("Waves can only add with media or surfaces")
      
         
+        
     def __sub__(self,other):
         if isinstance(other,wavecalc.classes.surface):
             return transmit(self,other)
         else:
             raise Exception("Waves can only subtract surfaces")
+            
+            
+            
+    def __pos__(self):
+        kvec = self.kvec
+        efield = self.efield
+        medium = self.medium
+        new = wave(kvec=kvec,efield=efield,medium=medium)
+        new.fixmode()
+        new.clean()
+        return new
+            
             
             
     def __neg__(self):
@@ -211,12 +312,14 @@ class wave:
             raise Exception("Wave must have a properly formed kvec to be negated")
             
     
+    
     def __matmul__(self,other):
         if isinstance(other,wavecalc.classes.surface):
             return crash(self,other,coat=other.coat,combine_same=True)
         else:
             raise Exception("Waves can only crash onto surfaces")
             
+    
     
     def __eq__(self,other):
         if isinstance(other,wavecalc.classes.wave):
@@ -317,8 +420,17 @@ class surface:
     
     # Custom methods            
     #-----------------------------------------------------------------------------------------
-    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+    def rotate(self,ang,axis,medmove=None,verbose=None):
         rotate_copy(self,ang,axis,medmove,verbose)
+        
+        
+    def clean(self,tol=None):
+        if goodtest(self):
+            self.normal = aux_clean(self.normal,tol)
+            self.out = aux_clean(self.out,tol)
+            self.into = aux_clean(self.into,tol)
+        else:
+            raise Exception("Surface object is not well-formed, check for improper attributes")
 
 
 
@@ -351,7 +463,19 @@ class surface:
             return reflect(other,self,coat=self.coat)
         else:
             raise Exception('Surfaces can only subtract waves or media')
+
+
+
+    def __pos__(self):
+        normal = self.normal
+        out = self.out
+        into = self.into
+        coat = self.coat
+        new = surface(normal=normal,out=out,into=into,coat=coat)
+        new.clean()
+        return new
             
+    
     
     def __neg__(self):
         if (isinstance(self.normal,numpy.ndarray) 
@@ -365,12 +489,14 @@ class surface:
         else:
             raise Exception("Surface must have a properly defined normal")
             
+            
     
     def __matmul__(self,other):
         if isinstance(other,wavecalc.classes.wave):
             return crash(other,self,coat=self.coat,combine_same=True)
         else:
             raise Exception("Only waves can crash onto surfaces")
+    
     
     
     def __invert__(self):
@@ -380,6 +506,7 @@ class surface:
         coat = self.coat
         new = surface(normal=normal,out=out,into=into,coat=coat)
         return new
+    
     
     
     def __eq__(self,other):
@@ -468,49 +595,87 @@ class medium:
         
     # Custom methods            
     #-----------------------------------------------------------------------------------------
-    def epx(self,epsilon_xx):
+    def epx(self,epsilon_xx=None):
         if (not isinstance(self.epsilon,numpy.ndarray) 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
-        if (isinstance(epsilon_xx,int) 
-            or isinstance(epsilon_xx,float) 
-            or isinstance(epsilon_xx,complex)):
+        if epsilon_xx is None:
+            return self.epsilon[0,0]
+        elif (isinstance(epsilon_xx,int) 
+            or isinstance(epsilon_xx,float)):
+            self.epsilon[0,0] = epsilon_xx
+        elif isinstance(epsilon_xx,complex):
+            self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
             self.epsilon[0,0] = epsilon_xx
         else:
-            raise Exception("Epsilon_xx must be an int, float, or complex")
+            raise Exception("'epsilon_xx' must be an int, float, or complex")
 
 
 
-    def epy(self,epsilon_yy):
+    def epy(self,epsilon_yy=None):
         if (not isinstance(self.epsilon,numpy.ndarray) 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
-        if (isinstance(epsilon_yy,int) 
-            or isinstance(epsilon_yy,float) 
-            or isinstance(epsilon_yy,complex)):
+        if epsilon_yy is None:
+            return self.epsilon[1,1]
+        elif (isinstance(epsilon_yy,int) 
+            or isinstance(epsilon_yy,float)):
+            self.epsilon[1,1] = epsilon_yy
+        elif isinstance(epsilon_yy,complex):
+            self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
             self.epsilon[1,1] = epsilon_yy
         else:
-            raise Exception("Epsilon_yy must be an int, float, or complex")
+            raise Exception("'epsilon_yy' must be an int, float, or complex")
 
 
 
-    def epz(self,epsilon_zz):
+    def epz(self,epsilon_zz=None):
         if (not isinstance(self.epsilon,numpy.ndarray) 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
-        if (isinstance(epsilon_zz,int) 
-            or isinstance(epsilon_zz,float) 
-            or isinstance(epsilon_zz,complex)):
+        if epsilon_zz is None:
+            return self.epsilon[2,2]
+        elif (isinstance(epsilon_zz,int) 
+            or isinstance(epsilon_zz,float)):
+            self.epsilon[2,2] = epsilon_zz
+        elif isinstance(epsilon_zz,complex):
+            self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
             self.epsilon[2,2] = epsilon_zz
         else:
-            raise Exception("Epsilon_zz must be an int, float, or complex")
+            raise Exception("'epsilon_zz' must be an int, float, or complex")
 
 
-    def rotate(self,ang,axis=None,medmove=None,verbose=None):
+
+    def ep_all(self,epsilon_all=None):
+        if (not isinstance(self.epsilon,numpy.ndarray) 
+            or not numpy.shape(self.epsilon)==(3,3)):
+            raise Exception("Medium must have proper epsilon attribute")
+        if epsilon_all is None:
+            return [self.epsilon[0,0],self.epsilon[1,1],self.epsilon[2,2]]
+        elif (isinstance(epsilon_all,int) 
+            or isinstance(epsilon_all,float)):
+            self.epsilon[0,0] = epsilon_all
+            self.epsilon[1,1] = epsilon_all
+            self.epsilon[2,2] = epsilon_all
+        elif isinstance(epsilon_all,complex):
+            self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
+            self.epsilon[0,0] = epsilon_all
+            self.epsilon[1,1] = epsilon_all
+            self.epsilon[2,2] = epsilon_all
+        else:
+            raise Exception("'epsilon_all' must be an int, float, or complex")
+
+
+
+    def rotate(self,ang,axis,medmove=None,verbose=None):
         rotate_copy(self,ang,axis,medmove,verbose)
 
 
-
+    def clean(self,tol=None):
+        if goodtest(self):
+            self.epsilon = aux_clean(self.epsilon,tol)
+        else:
+            raise Exception("Medium object is not well-formed, check for improper attributes")
 
 
 
@@ -535,6 +700,7 @@ class medium:
         else:
             raise Exception('Cannot add a medium to a non-wavecalc objects')
     
+    
         
     def __sub__(self,other):
         if isinstance(other,wavecalc.classes.medium):
@@ -549,7 +715,16 @@ class medium:
         else:
             raise Exception('Cannot add a medium to a non-medium')
             
-            
+   
+    
+    def __pos__(self):
+        epsilon = self.epsilon
+        new = medium(epsilon=epsilon)
+        new.clean()
+        return new
+    
+    
+         
     def __eq__(self,other):
         if isinstance(other,wavecalc.classes.medium):
             es = numpy.prod(self.epsilon == other.epsilon)
@@ -563,12 +738,43 @@ class medium:
                 
 
 
-'''
-class waveset:
-    def __init__
+
+class bundle(UserList):
+    ''' A class for a bundle of waves '''
+    def __init__(self,initdata=None):
+        if isinstance(initdata,wavecalc.classes.wave):
+            initdata = [initdata]
+        else:
+            truth = isinstance(initdata,list)*all(isinstance(x,wavecalc.classes.wave) for x in initdata)
+            if not truth:
+                raise Exception("Bundles can only be made from waves and lists of waves")
+        super().__init__(initdata)
+
+    
+    def append(self,item):
+        if isinstance(item,wavecalc.classes.wave):
+            self.data.append(item)
+        elif isinstance(item,list):
+            if all(isinstance(x,wavecalc.classes.wave) for x in item):
+                for x in item:
+                    self.data.append(x)
+            else:
+                raise Exception("Can only append waves and lists of waves to a bundle")
+        else:
+            raise Exception("Can only append waves and lists of waves to a bundle")
+
+
+
+
+
+
+class chain(UserList):
+    ''' A class for a chain of surfaces '''
+    def __init__(self,initdata=None):
+        super().__init__(initdata)
 
         
-'''
+
 
 
 class example_class:

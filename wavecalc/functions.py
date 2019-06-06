@@ -4,7 +4,7 @@ import wavecalc
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 3, 2019 01:51 EST
+last update: June 6, 2019 10:37 EST
 '''
 '''
 Table of Contents:
@@ -332,7 +332,7 @@ def modes(ob,med,k0=None,verbose=None):
 #
 #         
 #
-def rotate(ob,ang,axis=None,medmove=None,verbose=None):
+def rotate(ob,ang,axis,medmove=None,verbose=None):
     ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' '''
     
     
@@ -375,12 +375,20 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     # Handle (3,1) numpy ndarrays as ob input
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,1):
+        if not medmove is None:
+            str1 = "When 'ob' is a numpy ndarray, 'medmove' option has no meaning \n"
+            str2 = "and will thus be ignored"
+            print(str1+str2)
         return aux_rotvec(ob,ang,axis)
         
     
     # Handle (3,3) numpy ndarrays as ob input
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,numpy.ndarray) and numpy.shape(ob) == (3,3):
+        if not medmove is None:
+            str1 = "When 'ob' is a numpy ndarray, 'medmove' option has no meaning \n"
+            str2 = "and will thus be ignored"
+            print(str1+str2)
         return aux_rottens(ob,ang,axis)
         
         
@@ -447,7 +455,7 @@ def rotate(ob,ang,axis=None,medmove=None,verbose=None):
     elif isinstance(ob,wavecalc.classes.medium):
         if not aux_goodtest(ob):
             raise Exception('Your wavecalc medium has improper attributes')
-        if medmove not in set([None]):
+        if not medmove is None:
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
             print(str1+str2)
@@ -2226,7 +2234,7 @@ def aux_realtest(ob):
 #
 #         
 #
-def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
+def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     ''' Rotates wavecalc objects around a specified axis: 'x', 'y', or 'z' \n
         For use with rotate class methods'''
     
@@ -2268,7 +2276,7 @@ def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
     # Handle wave instances
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,wavecalc.classes.wave):
-        if not aux_goodtest(ob):
+        if not aux_goodtest_wav(ob):
             raise Exception('Your wavecalc wave has improper attributes')
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
@@ -2290,7 +2298,7 @@ def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
     # Handle surface instances
     #---------------------------------------------------------------------------------------------------
     elif isinstance(ob,wavecalc.classes.surface):
-        if not aux_goodtest(ob):
+        if not aux_goodtest_surf(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         if medmove == 'only':
             ob.out = aux_rottens(ob.out,ang,axis)
@@ -2316,9 +2324,9 @@ def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
     # Handle medium instances
     #---------------------------------------------------------------------------------------------------        
     elif isinstance(ob,wavecalc.classes.medium):
-        if not aux_goodtest(ob):
+        if not aux_goodtest_med(ob):
             raise Exception('Your wavecalc medium has improper attributes')
-        if medmove not in set([None]):
+        if not medmove is None:
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
             print(str1+str2)
@@ -2358,7 +2366,7 @@ def aux_rotate_copy(ob,ang,axis=None,medmove=None,verbose=None):
 #
 #         
 #    
-def aux_rotmatrix(ang,axis=None):
+def aux_rotmatrix(ang,axis):
     ''' A behind-the-scenes function for building rotation matrices '''
     
     
@@ -2429,7 +2437,7 @@ def aux_rotmatrix(ang,axis=None):
 #
 #         
 #    
-def aux_rottens(tens,ang,axis=None):
+def aux_rottens(tens,ang,axis):
     ''' A behind-the-scenes function to rotate tensors around a specified axis: 'x', 'y', or 'z' '''
     
     
@@ -2481,7 +2489,7 @@ def aux_rottens(tens,ang,axis=None):
 #
 #         
 #
-def aux_rotvec(vec,ang,axis=None):
+def aux_rotvec(vec,ang,axis):
     ''' A behind-the-scenes function to rotate vectors around a specified axis: 'x', 'y', or 'z' '''
     
     
