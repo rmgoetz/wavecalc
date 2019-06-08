@@ -4,41 +4,41 @@ import wavecalc
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 6, 2019 10:37 EST
+last update: June 8, 2019 16:39 EST
 '''
 '''
 Table of Contents:
 
     Foreground Functions:
         
-        crash --------------------------------- Line 77
+        crash --------------------------------- Line 100
         
-        modes --------------------------------- Line 204
+        modes --------------------------------- Line 
         
-        rotate -------------------------------- Line 315
+        rotate -------------------------------- Line 
         
-        reflect ------------------------------- Line 458
+        reflect ------------------------------- Line 
         
-        transmit ------------------------------ Line 561
+        transmit ------------------------------ Line 
         
     
     Background Functions:
         
-        aux_booker_interf --------------------- Line 665
+        aux_booker_interf --------------------- Line 
         
-        aux_check_same ------------------------ Line 798
+        aux_check_same ------------------------ Line 
         
-        aux_clean ----------------------------- Line 913
+        aux_clean ----------------------------- Line 
         
-        aux_coat_handle ----------------------- Line 1008
+        aux_coat_handle ----------------------- Line 
         
-        aux_coord_transform ------------------- Line 1094
+        aux_coord_transform ------------------- Line 
         
-        aux_field_match ----------------------- Line 1205
-                
-        aux_fixmode --------------------------- Line 1294
+        aux_field_match ----------------------- Line 
         
-        aux_goodtest -------------------------- Line 1430
+        aux_fixmode --------------------------- Line 
+        
+        aux_goodtest -------------------------- Line 
         
         aux_goodtest_wav ---------------------- Line
         
@@ -46,35 +46,54 @@ Table of Contents:
         
         aux_goodtest_med ---------------------- Line
         
-        aux_maxwell_eigenvec ------------------ Line 1542
+        aux_maxwell_eigenvec ------------------ Line 
         
-        aux_modecalc -------------------------- Line 1647
+        aux_modecalc -------------------------- Line 
         
-        aux_quarttest ------------------------- Line 1754
+        aux_quarttest ------------------------- Line 
         
-        aux_realtest -------------------------- Line 1814
+        aux_realtest -------------------------- Line 
         
-        aux_rotate_copy ----------------------- Line 1928
+        aux_rotate_copy ----------------------- Line 
         
-        aux_rotmatrix ------------------------- Line 2060
+        aux_rotmatrix ------------------------- Line 
         
-        aux_rottens --------------------------- Line 2131
+        aux_rottens --------------------------- Line 
 
-        aux_rotvec ---------------------------- Line 2183
+        aux_rotvec ---------------------------- Line 
         
-        aux_waveinterf ------------------------ Line 2235
+        aux_waveinterf ------------------------ Line 
            
         
     Under Construction:
         
-        aux_ferrari --------------------------- Line 2494
+        aux_complex_killer -------------------- Line
         
-        aux_root_order ------------------------ Line 2543
+        aux_ferrari --------------------------- Line 
+        
+        aux_root_order ------------------------ Line 
 
 
 Last line check: June 2, 2019
 
 '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -734,6 +753,7 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     #                                                                                                  #
     ####################################################################################################
     
+
     
     # Compute the minors of epsilon 1 in the solution coordinates
     #---------------------------------------------------------------------------------------------------
@@ -810,7 +830,7 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
     # Eliminate small imaginary numerical junk
     #---------------------------------------------------------------------------------------------------
     for i in range(4):
-        if kzout[i].imag < 1e-10:
+        if abs(kzout[i].imag) < 1e-10:
             kzout[i] = kzout[i].real
     
     
@@ -1039,6 +1059,8 @@ def aux_clean(ob,tolerance=None):
                 digg = digg-1
                 remainder = numpy.abs(round(dummy[i,0],digg)-dummy[i,0])
             dummy[i,0] = round(dummy[i,0],digg+1)
+        if numpy.isreal(dummy).all():
+            dummy = numpy.asarray(dummy,dtype=float)
         return dummy
     
     
@@ -1053,6 +1075,8 @@ def aux_clean(ob,tolerance=None):
                     digg = digg-1
                     remainder = numpy.abs(round(dummy[i,j],digg)-dummy[i,j])
                 dummy[i,j] = round(dummy[i,j],digg+1)
+        if numpy.isreal(dummy).all():
+            dummy = numpy.asarray(dummy,dtype=float)
         return dummy
 #
 #
@@ -1149,8 +1173,7 @@ def aux_coat_handle(Ein,Ea,Eb,Eg,En,ep1,ep2,coat):
         u_refl = u_refl_a + u_refl_b
         Ea = numpy.sqrt(u_inc/u_refl)*Ea
         Eb = numpy.sqrt(u_inc/u_refl)*Eb
-        return [Ea,Eb,Eg,En]
-    
+        return [Ea,Eb,Eg,En] 
 #
 #
 #
@@ -2571,19 +2594,16 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     #                                                                                                  #
     ####################################################################################################
     
-    
 
-    
-    ####################################################################################################
-    ####################################################################################################
-    ##################################### CHANGE OF COORDINATES ########################################
-    ####################################################################################################
-    ####################################################################################################
-    
+    # Get the coordinate transform matrices
+    #---------------------------------------------------------------------------------------------------    
     coord = aux_coord_transform(k,s,verbose=verbose)
     U = coord[0]
     Uinv = coord[1]
     
+    
+    # Transform the inputs into the solver basis coordinates
+    #---------------------------------------------------------------------------------------------------
     k_p = Uinv @ k
     
     if ef is not None:
@@ -2593,18 +2613,12 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     ep2_p = Uinv @ ep2 @ U
     
     
-    ####################################################################################################
-    ####################################################################################################
-    ###################################### SOLVE THE QUARTIC ###########################################
-    ####################################################################################################
-    ####################################################################################################
-    
     # Normalize the kx component
     #---------------------------------------------------------------------------------------------------
     kx = k_p[0,0]/k0
     
     
-    # get the solutions to the quartic
+    # Get the solutions to the quartic
     #---------------------------------------------------------------------------------------------------
     kz_vals = aux_booker_interf(kx,ep1_p,ep2_p,verbose=verbose)
 
@@ -2633,11 +2647,36 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     k_nu = U @ k_nu_p
     
     
+    # Delete any unecessary complex datatypes
+    #---------------------------------------------------------------------------------------------------
+    whole_list = [k_alpha,k_beta,k_gamma,k_nu]
+    for i, wvec in enumerate(whole_list):
+        really = numpy.isreal(wvec).all()
+        if really:
+            whole_list[i] = numpy.asarray(wvec,dtype=float)
+    
+    
+    # Verbosity
+    #---------------------------------------------------------------------------------------------------
+    if verbose == True:
+        if act == 'refl':
+            print("k_alpha = ",k_alpha.T)
+            print("k_ beta = ",k_beta.T)
+        elif act == 'trans':
+            print("k_gamma = ",k_gamma.T)
+            print("k_ nu = ",k_nu.T)
+        else:
+            print("k_alpha = ",k_alpha.T)
+            print("k_ beta = ",k_beta.T)
+            print("k_gamma = ",k_gamma.T)
+            print("k_ nu = ",k_nu.T)
+    
+    
     # Build the arrays of solutions
     #---------------------------------------------------------------------------------------------------
-    both = numpy.array([k_alpha,k_beta,k_gamma,k_nu])
-    refls = numpy.array([k_alpha,k_beta])
-    transs = numpy.array([k_gamma,k_nu])
+    both = numpy.array(whole_list)
+    refls = numpy.array(whole_list[0:2])  #[k_alpha,k_beta]
+    transs = numpy.array(whole_list[2:4])  # [k_gamma,k_nu]
 
 
     # Calculate effective indices of refraction
@@ -2658,7 +2697,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     n_nu = nu_norm/k0
     
     
-    # get the field eigenvectors in the solver frame
+    # Get the field eigenvectors in the solver frame
     #---------------------------------------------------------------------------------------------------
     alpha_p = aux_maxwell_eigenvec(k_alpha_p,ep1_p,k0,verbose=verbose,switch=0)
     beta_p = aux_maxwell_eigenvec(k_beta_p,ep1_p,k0,verbose=verbose,switch=1)
@@ -2666,7 +2705,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     nu_p = aux_maxwell_eigenvec(k_nu_p,ep2_p,k0,verbose=verbose,switch=1)
     
     
-    # transform the normalized eigenvectors to the lab frame
+    # Transform the normalized eigenvectors to the lab frame
     #---------------------------------------------------------------------------------------------------
     alpha_hat = U @ alpha_p
     beta_hat = U @ beta_p
@@ -2674,7 +2713,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     nu_hat = U @ nu_p
     
     
-    # handle the case of no efield
+    # Handle the case of no efield
     #---------------------------------------------------------------------------------------------------
     if ef is None:
         if act=='refl':
@@ -2708,7 +2747,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
         
     
     
-    # find the field reflection and transmission coefficients
+    # Find the field reflection and transmission coefficients
     #---------------------------------------------------------------------------------------------------
     coeffs = aux_field_match(k_alpha_p,k_beta_p,k_gamma_p,k_nu_p,
                              alpha_p,beta_p,gamma_p,nu_p,
@@ -2722,7 +2761,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     
     
     
-    # construct the four field vectors in the lab frame
+    # Construct the four field vectors in the lab frame
     #---------------------------------------------------------------------------------------------------
     alpha_ef = R_alpha*alpha_hat
     beta_ef = R_beta*beta_hat
@@ -2730,17 +2769,28 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     nu_ef = T_nu*nu_hat
     
     
-    # adjust the field vectors to account for the surface coating
+    # Adjust the field vectors to account for the surface coating
     #---------------------------------------------------------------------------------------------------  
-    out = aux_coat_handle(Ein=ef,Ea=alpha_ef,Eb=beta_ef,Eg=gamma_ef,En=nu_ef,ep1=ep1,ep2=ep2,coat=coating)
+    out_fields = aux_coat_handle(Ein=ef,Ea=alpha_ef,Eb=beta_ef,Eg=gamma_ef,En=nu_ef,ep1=ep1,ep2=ep2,coat=coating)
+
+
+    # Delete any unecessary complex datatypes in the field vectors
+    #---------------------------------------------------------------------------------------------------
+    for i, evec in enumerate(whole_list):
+        really = numpy.isreal(evec).all()
+        if really:
+            out_fields[i] = numpy.asarray(evec,dtype=float)
+
+
+    # Get the four field vectors
+    #---------------------------------------------------------------------------------------------------    
+    alpha_ef = out_fields[0]
+    beta_ef = out_fields[1]
+    gamma_ef = out_fields[2]
+    nu_ef = out_fields[3]
     
-    alpha_ef = out[0]
-    beta_ef = out[1]
-    gamma_ef = out[2]
-    nu_ef = out[3]
     
-    
-    # create the four new waves as wave objects
+    # Create the four new waves as wave objects
     #---------------------------------------------------------------------------------------------------
     alpha_wave = wavecalc.classes.wave(kvec=k_alpha,efield=alpha_ef,medium=ep1) 
     beta_wave = wavecalc.classes.wave(kvec=k_beta,efield=beta_ef,medium=ep1)
@@ -2748,7 +2798,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     nu_wave = wavecalc.classes.wave(kvec=k_nu,efield=nu_ef,medium=ep2)
     
     
-    # create the solution sets and eliminate redunancies if necessary
+    # Create the solution sets and eliminate redunancies if necessary
     #---------------------------------------------------------------------------------------------------
     both = aux_check_same([alpha_wave,beta_wave,gamma_wave,nu_wave],switch=same)
     refls = aux_check_same([alpha_wave,beta_wave],switch=same)
@@ -2771,6 +2821,63 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
             print('gamma-wave (trans) effective index=',n_gamma)
             print('nu-wave (trans) effective index=',n_nu)
         return both
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_complex_killer(ob):
+    ''' A behind-the-scenes function for recasting complexes with 0 imaginary as floats '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The coating function                                                                             #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # ob - The object to be recast, either a WaveCalc wave, surface, or medium.                        #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Returns the object recast as a float type if all imaginary parts are zero.                       #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 7, 2019                                                                       #
+    #                                                                                                  #
+    #################################################################################################### 
+    
+    if not isinstance(ob,(wavecalc.classes.wave,wavecalc.classes.surface,wavecalc.classes.medium)):
+        return ob
+    
+    elif isinstance(ob,wavecalc.classes.wave):
+        return ob
+    elif isinstance(ob,wavecalc.classes.surface):
+        return ob
+    else:
+        return ob
+       
 #
 #
 #

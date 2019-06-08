@@ -1,18 +1,30 @@
 # -*- coding: utf-8 -*-
+import wavecalc
+import numpy
+import copy
+from numpy import random
+from collections import UserList
+from wavecalc.functions import aux_rotate_copy as rotate_copy
+from wavecalc.functions import transmit as transmit
+from wavecalc.functions import reflect as reflect
+from wavecalc.functions import crash as crash
+from wavecalc.functions import aux_goodtest as goodtest
+from wavecalc.functions import aux_fixmode
+from wavecalc.functions import aux_clean 
 """
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 6, 2019 10:37 EST
+last update: June 8, 2019 16:39 EST
 """
 '''
 Table of Contents
 
-    wave Class -------------------------------- Line 66
+    wave Class -------------------------------- Line 114
        
-        __init__ ------------------------------ Line
-        pol ----------------------------------- Line
-        amp ----------------------------------- Line
+        __init__ ------------------------------ Line 116
+        pol ----------------------------------- Line 189
+        amp ----------------------------------- Line 212
         poynting ------------------------------ Line
         rotate -------------------------------- Line
         fixmode ------------------------------- Line
@@ -22,12 +34,13 @@ Table of Contents
         __sub__ ------------------------------- Line
         __pos__ ------------------------------- Line
         __neg__ ------------------------------- Line
+        __invert__ ---------------------------- Line
         __matmul__ ---------------------------- Line
         __eq__ -------------------------------- Line
         
        
         
-    surface Class ----------------------------- Line 326
+    surface Class ----------------------------- Line 380
     
         __init__ ------------------------------ Line
         rotate -------------------------------- Line
@@ -42,7 +55,7 @@ Table of Contents
         
         
         
-    medium Class ------------------------------ Line 524
+    medium Class ------------------------------ Line 576
 
         __init__ ------------------------------ Line
         epx ----------------------------------- Line
@@ -58,45 +71,52 @@ Table of Contents
 
 
 
-    bundle Class ------------------------------ Line
+    bundle Class ------------------------------ Line 788
     
         __init__ ------------------------------ Line
-        append
-        __setitem__
+        append -------------------------------- Line
+        __setitem__ --------------------------- Line
         
         
     
-    chain Class -------------------------------- Line
+    chain Class ------------------------------- Line
     
-        __init__ ------------------------------- Line
-        append --------------------------------- Line
-        __setitem__ ---------------------------- Line
+        __init__ ------------------------------ Line
+        append -------------------------------- Line
+        __setitem__ --------------------------- Line
+        
+        
+        
+    example_class Class ----------------------- Line 890
+    
+        __init__ ------------------------------ Line
+        
 
 
-Last line check June 6, 2019
+Last line check June 8, 2019
 
 '''
 
-import wavecalc
-#from wavecalc import functions
-import numpy
-from numpy import random
-from collections import UserList
-from wavecalc.functions import aux_rotate_copy as rotate_copy
-from wavecalc.functions import transmit as transmit
-from wavecalc.functions import reflect as reflect
-from wavecalc.functions import crash as crash
-from wavecalc.functions import aux_goodtest as goodtest
-from wavecalc.functions import aux_fixmode
-from wavecalc.functions import aux_clean 
-
-
+####################################################################################
+#----------------------------------------------------------------------------------#
+#--w---------------------------w------w------w-----------------w------wwwwwwwwwww--#
+#---w-------------------------w------w-w------w---------------w------w-------------#
+#----w-----------------------w------w---w------w-------------w------w--------------#
+#-----w---------------------w------w-----w------w-----------w------w---------------#
+#------w---------w---------w------w-------w------w---------w------wwwwwwwwwww------#
+#-------w-------w-w-------w------wwwwwwwwwww------w-------w------w-----------------#
+#--------w-----w---w-----w------w-----------w------w-----w------w------------------#
+#---------w---w-----w---w------w-------------w------w---w------w-------------------#
+#----------w-w-------w-w------w---------------w------w-w------w--------------------#
+#-----------w---------w------w-----------------w------w------wwwwwwwwwww-----------#
+#----------------------------------------------------------------------------------#
+####################################################################################
 class wave:
     ''' A class for EM waves '''
     def __init__(self,kvec=None,efield=None,medium=None,pol=None,amp=None,everything=None):
         
         # kvec attribute
-        #-------------------------------------------------------------------------------------
+        #-------------------------------------------------------------------------------------        
         if kvec is False or everything is False:
             self.kvec = None
         
@@ -189,19 +209,22 @@ class wave:
         
         
         
-    def amp(self,amplitude=None):
+    def amp(self,amplitude=None,rel=False):
         if amplitude is None:
             if type(self.efield) is numpy.ndarray and numpy.shape(self.efield) == (3,1):
                 sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0]
                 norm = numpy.sqrt(sqr_mod)
                 return norm.real    
             else:
-                print("No electric field found")
+                print("No appropriate electric field found")
         elif isinstance(amplitude,(int,float)):
-            sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0]
-            norm = numpy.sqrt(sqr_mod)
-            norm = norm.real
-            self.efield = (amplitude/norm)*self.efield 
+            if rel:
+                self.efield = amplitude*self.efield
+            else:
+                sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0]
+                norm = numpy.sqrt(sqr_mod)
+                norm = norm.real
+                self.efield = (amplitude/norm)*self.efield 
         else:
             raise Exception("New amplitude must be an int or a float")
             
@@ -269,10 +292,8 @@ class wave:
     #-----------------------------------------------------------------------------------------
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            kvec = self.kvec
-            efield = self.efield
-            medium = other.epsilon
-            new = wave(kvec=kvec,efield=efield,medium=medium)
+            new = copy.deepcopy(self)
+            new.medium = other.epsilon
             return new
         elif isinstance(other,wavecalc.classes.surface):
             return reflect(self,other,coat=other.coat)
@@ -290,10 +311,7 @@ class wave:
             
             
     def __pos__(self):
-        kvec = self.kvec
-        efield = self.efield
-        medium = self.medium
-        new = wave(kvec=kvec,efield=efield,medium=medium)
+        new = copy.deepcopy(self)
         new.fixmode()
         new.clean()
         return new
@@ -301,15 +319,24 @@ class wave:
             
             
     def __neg__(self):
-        if (isinstance(self.kvec,numpy.ndarray) 
-            and numpy.shape(self.kvec) == (3,1)):
-            kvec = -self.kvec
-            efield = self.efield
-            medium = self.medium
-            new = wave(kvec=kvec,efield=efield,medium=medium)
+        if (isinstance(self.efield,numpy.ndarray) 
+            and numpy.shape(self.efield)==(3,1)):
+            new = copy.deepcopy(self)
+            new.efield = -self.efield+0
             return new
         else:
-            raise Exception("Wave must have a properly formed kvec to be negated")
+            raise Exception("Wave must have a properly formed efield to be negated")
+            
+            
+            
+    def __invert__(self):
+        if (isinstance(self.kvec,numpy.ndarray) 
+            and numpy.shape(self.kvec)==(3,1)):
+            new = copy.deepcopy(self)
+            new.kvec = -self.kvec+0
+            return new
+        else:
+            raise Exception("Wave must have properly formed kvec to invert")
             
     
     
@@ -336,7 +363,20 @@ class wave:
         
         
     
-
+########################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 class surface:
     ''' A class for planar interfaces '''
     def __init__(self,normal=None,into=None,out=None,coat=None,everything=None):
@@ -438,11 +478,8 @@ class surface:
     #-----------------------------------------------------------------------------------------        
     def __add__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            normal = self.normal
-            out = self.out
-            into = other.epsilon
-            coat = self.coat
-            new = surface(normal=normal,out=out,into=into,coat=coat) 
+            new = copy.deepcopy(self)
+            new.into = other.epsilon
             return new
         elif isinstance(other,wavecalc.classes.wave):
             return transmit(other,self,coat=self.coat)
@@ -453,11 +490,8 @@ class surface:
         
     def __sub__(self,other):
         if isinstance(other,wavecalc.classes.medium):
-            normal = self.normal
-            out = other.epsilon
-            into = self.into
-            coat = self.coat
-            new = surface(normal=normal,out=out,into=into,coat=coat)
+            new = copy.deepcopy(self)
+            new.out = other.epsilon
             return new
         elif isinstance(other,wavecalc.classes.wave):
             return reflect(other,self,coat=self.coat)
@@ -467,11 +501,7 @@ class surface:
 
 
     def __pos__(self):
-        normal = self.normal
-        out = self.out
-        into = self.into
-        coat = self.coat
-        new = surface(normal=normal,out=out,into=into,coat=coat)
+        new = copy.deepcopy(self)
         new.clean()
         return new
             
@@ -480,11 +510,8 @@ class surface:
     def __neg__(self):
         if (isinstance(self.normal,numpy.ndarray) 
             and numpy.shape(self.normal) == (3,1)):
-            normal = -self.normal
-            out = self.out
-            into = self.into
-            coat = self.coat
-            new = surface(normal=normal,out=out,into=into,coat=coat)
+            new = copy.deepcopy(self)
+            new.normal = -self.normal+0
             return new
         else:
             raise Exception("Surface must have a properly defined normal")
@@ -500,11 +527,9 @@ class surface:
     
     
     def __invert__(self):
-        normal = self.normal 
-        out = self.into
-        into = self.out
-        coat = self.coat
-        new = surface(normal=normal,out=out,into=into,coat=coat)
+        new = copy.deepcopy(self)
+        new.out = self.into
+        new.into = self.out
         return new
     
     
@@ -534,7 +559,20 @@ class surface:
         
         
         
-        
+########################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################        
 class medium:
     ''' A class for dielectric media '''
     def __init__(self,epx=None,epy=None,epz=None,ep_all=None,epsilon=None,everything=None):
@@ -671,6 +709,7 @@ class medium:
         rotate_copy(self,ang,axis,medmove,verbose)
 
 
+
     def clean(self,tol=None):
         if goodtest(self):
             self.epsilon = aux_clean(self.epsilon,tol)
@@ -685,17 +724,12 @@ class medium:
         if isinstance(other,wavecalc.classes.medium):
             return surface(out=self.epsilon,into=other.epsilon)
         elif isinstance(other,wavecalc.classes.surface):
-            normal = other.normal 
-            out = self.epsilon
-            into = other.into
-            coat = other.coat
-            new = surface(normal=normal,out=out,into=into,coat=coat)
+            new = copy.deepcopy(other)
+            new.out = self.epsilon
             return new
         elif isinstance(other,wavecalc.classes.wave):
-            kvec = other.kvec
-            efield = other.efield
-            medium = self.epsilon
-            new = wave(kvec=kvec,efield=efield,medium=medium)
+            new = copy.deepcopy(other)
+            new.medium = self.epsilon
             return new
         else:
             raise Exception('Cannot add a medium to a non-wavecalc objects')
@@ -706,11 +740,8 @@ class medium:
         if isinstance(other,wavecalc.classes.medium):
                 return surface(out=other.epsilon,into=self.epsilon)
         elif isinstance(other,wavecalc.classes.surface):
-            normal = other.normal
-            out = other.out
-            into = self.epsilon
-            coat = other.coat
-            new = surface(normal=normal,out=out,into=into,coat=coat)
+            new = copy.deepcopy(other)
+            new.into = self.epsilon
             return new
         else:
             raise Exception('Cannot add a medium to a non-medium')
@@ -718,8 +749,7 @@ class medium:
    
     
     def __pos__(self):
-        epsilon = self.epsilon
-        new = medium(epsilon=epsilon)
+        new = copy.deepcopy(self)
         new.clean()
         return new
     
@@ -739,6 +769,22 @@ class medium:
 
 
 
+
+
+########################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 class bundle(UserList):
     ''' A class for a bundle of waves '''
     def __init__(self,initdata=None):
@@ -751,6 +797,9 @@ class bundle(UserList):
         super().__init__(initdata)
 
     
+    
+    # Overloaded methods            
+    #-----------------------------------------------------------------------------------------
     def append(self,item):
         if isinstance(item,wavecalc.classes.wave):
             self.data.append(item)
@@ -764,10 +813,47 @@ class bundle(UserList):
             raise Exception("Can only append waves and lists of waves to a bundle")
 
 
+    
+    def __setitem__(self,i,item):
+        if isinstance(item,wavecalc.classes.wave):
+            self.data[i] = item
+        else:
+            raise Exception("Bundle components must be waves")
+
+
+
+    def insert(self,i,item):
+        if isinstance(item,wavecalc.classes.wave):
+            self.data.insert(i,item)
+        else:
+            raise Exception("Bundle comnponents must be waves")
 
 
 
 
+
+
+
+
+
+
+
+
+
+########################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 class chain(UserList):
     ''' A class for a chain of surfaces '''
     def __init__(self,initdata=None):
@@ -777,6 +863,30 @@ class chain(UserList):
 
 
 
+
+
+
+
+
+
+
+
+
+
+########################################################################################################################
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------------------------#
+########################################################################################################################
 class example_class:
     def __init__(self,example_attribute=None,everything=None):
         
