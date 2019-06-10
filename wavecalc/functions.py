@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy
 import wavecalc
+import copy
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
@@ -903,7 +904,7 @@ def aux_check_same(lis,switch=None):
     ####################################################################################################
     
     
-    # Handle te switch options
+    # Handle the switch options
     #---------------------------------------------------------------------------------------------------
     if switch is False:
         return lis
@@ -917,13 +918,15 @@ def aux_check_same(lis,switch=None):
         if ell == 2:
             E1 = lis[0]
             E2 = lis[1]
-            E1c = E1 
-            E2c = E2
+            E1c = copy.deepcopy(E1) 
+            E2c = copy.deepcopy(E2)
             E1c.clean()
             E2c.clean()
             delta = E1c.kvec-E2c.kvec
+            sigma = E1c.kvec+E2c.kvec
             diff = (numpy.conj(delta).T @ delta)[0,0].real
-            if diff < 1e-14:
+            summ = (numpy.conj(sigma).T @ sigma)[0,0].real
+            if (diff/summ) < 1e-10: # 1e-10 is the value you would get if the two vectors were the same amplitude and 20 urad apart
                 efsum = E1.efield +E2.efield
                 k = E1.kvec
                 med = E1.medium
@@ -942,20 +945,24 @@ def aux_check_same(lis,switch=None):
             E2 = lis[1]
             E3 = lis[2]
             E4 = lis[3]
-            E1c = E1 
-            E2c = E2
-            E3c = E3
-            E4c = E4
+            E1c = copy.deepcopy(E1) 
+            E2c = copy.deepcopy(E2)
+            E3c = copy.deepcopy(E3)
+            E4c = copy.deepcopy(E4)
             E1c.clean()
             E2c.clean()
             E3c.clean()
             E4c.clean()
             delta1 = E1c.kvec-E2c.kvec
+            sigma1 = E1c.kvec+E2c.kvec
             delta2 = E3c.kvec-E4c.kvec
+            sigma2 = E3c.kvec+E4c.kvec
             diff1 = (numpy.conj(delta1).T @ delta1)[0,0].real
+            summ1 = (numpy.conj(sigma1).T @ sigma1)[0,0].real
             diff2 = (numpy.conj(delta2).T @ delta2)[0,0].real
-            if diff1 < 1e-14:
-                efsum = E1.efield +E2.efield
+            summ2 = (numpy.conj(sigma2).T @ sigma2)[0,0].real
+            if (diff1/summ1) < 1e-10: # 1e-10 is the value you would get if the two vectors were the same amplitude and 20 urad apart
+                efsum = E1.efield+E2.efield
                 k = E1.kvec
                 med = E1.medium
                 wave = wavecalc.classes.wave(kvec=k,efield=efsum,medium=med)
@@ -963,8 +970,8 @@ def aux_check_same(lis,switch=None):
             else:
                 LIS.append(E1)
                 LIS.append(E2)
-            if diff2 < 1e-14:
-                efsum = E3.efield +E4.efield
+            if (diff2/summ2) < 1e-10: # 1e-10 is the value you would get if the two vectors were the same amplitude and 20 urad apart
+                efsum = E3.efield+E4.efield
                 k = E3.kvec
                 med = E3.medium
                 wave = wavecalc.classes.wave(kvec=k,efield=efsum,medium=med)
@@ -2307,11 +2314,14 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
             print(str1+str2)
             medmove = None
         if medmove == 'only':
-            ob.medium = aux_rottens(ob.medium,ang,axis)
+            if ob.medium is not None:
+                ob.medium = aux_rottens(ob.medium,ang,axis)
         else:
-            ob.kvec = aux_rotvec(ob.kvec,ang,axis)
-            ob.efield = aux_rotvec(ob.efield,ang,axis)
-            if medmove == 'with':
+            if ob.kvec is not None:
+                ob.kvec = aux_rotvec(ob.kvec,ang,axis)
+            if ob.efield is not None:
+                ob.efield = aux_rotvec(ob.efield,ang,axis)
+            if medmove == 'with' and ob.medium is not None:
                 ob.medium = aux_rottens(ob.medium,ang,axis)
         if verbose == True:
             print('New kvec :',ob.kvec)
@@ -2324,20 +2334,28 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
         if not aux_goodtest_surf(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         if medmove == 'only':
-            ob.out = aux_rottens(ob.out,ang,axis)
-            ob.into = aux_rottens(ob.into,ang,axis)
-        elif medmove == 'onlyout':
-            ob.out = aux_rottens(ob.out,ang,axis)
-        elif medmove == 'onlyinto':
-            ob.into = aux_rottens(ob.into,ang,axis)
-        else:
-            ob.normal = aux_rotvec(ob.normal,ang,axis)
-            if medmove == 'with':
+            if ob.out is not None:
                 ob.out = aux_rottens(ob.out,ang,axis)
+            if ob.into is not None:
                 ob.into = aux_rottens(ob.into,ang,axis)
-            elif medmove == 'out':
+        elif medmove == 'onlyout':
+            if ob.out is not None:
                 ob.out = aux_rottens(ob.out,ang,axis)
-            elif medmove == 'into':
+        elif medmove == 'onlyinto':
+            if ob.into is not None:
+                ob.into = aux_rottens(ob.into,ang,axis)
+        else:
+            if ob.normal is not None:
+                ob.normal = aux_rotvec(ob.normal,ang,axis)
+            if medmove == 'with':
+                if ob.out is not None:
+                    ob.out = aux_rottens(ob.out,ang,axis)
+                if ob.into is not None:
+                    ob.into = aux_rottens(ob.into,ang,axis)
+            elif medmove == 'out':
+                if ob.out is not None:
+                    ob.out = aux_rottens(ob.out,ang,axis)
+            elif medmove == 'into' and ob.into is not None:
                 ob.into = aux_rottens(ob.into,ang,axis)
         if verbose == True:
             print('New normal :',ob.normal)
@@ -2353,7 +2371,8 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
             str2 = "Variable 'medmove' will be set to None for following calculation."
             print(str1+str2)
-        ob.epsilon = aux_rottens(ob.epsilon,ang,axis)
+        if ob.epsilon is not None:
+            ob.epsilon = aux_rottens(ob.epsilon,ang,axis)
         if verbose == True:
             print('epsilon :',ob.epsilon)
     
@@ -2405,14 +2424,11 @@ def aux_rotmatrix(ang,axis):
     # Outputs the corresponding rotation matrix as a (3,3) numpy matrix.                               #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 21, 2019                                                                       #
+    # Last Updated: June 10, 2019                                                                      #
     #                                                                                                  #
     ####################################################################################################
     
-    if not isinstance(ang,int) and not isinstance(ang,float):
-        raise Exception("Variable 'ang' must be specified as either a float or an int")
-    
-    if not ang is int(ang) and not ang is float(ang):
+    if not isinstance(ang,(int,float)):
         raise Exception("Variable 'ang' must be specified as either a float or an int")
     
     pi = 3.141592653589793115997963468544185161590576171875
@@ -2590,7 +2606,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     # or output waves respectively.                                                                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 30, 2019                                                                       #
+    # Last Updated: June 10, 2019                                                                      #
     #                                                                                                  #
     ####################################################################################################
     
@@ -2712,6 +2728,12 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     gamma_hat = U @ gamma_p
     nu_hat = U @ nu_p
     
+    if verbose == True:
+        print("alpha eigenvector: ",alpha_hat.T)
+        print("beta eigenvector: ",beta_hat.T)
+        print("gamma eigenvector: ",gamma_hat.T)
+        print("nu eigenvector: ",nu_hat.T)
+    
     
     # Handle the case of no efield
     #---------------------------------------------------------------------------------------------------
@@ -2759,6 +2781,12 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     T_gamma = coeffs[2]
     T_nu = coeffs[3]
     
+    if verbose == True:
+        print("R_alpha = ",R_alpha)
+        print("R_beta = ",R_beta)
+        print("T_gamma = ",T_gamma)
+        print("T_nu = ",T_nu)
+    
     
     
     # Construct the four field vectors in the lab frame
@@ -2776,7 +2804,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
 
     # Delete any unecessary complex datatypes in the field vectors
     #---------------------------------------------------------------------------------------------------
-    for i, evec in enumerate(whole_list):
+    for i, evec in enumerate(out_fields):
         really = numpy.isreal(evec).all()
         if really:
             out_fields[i] = numpy.asarray(evec,dtype=float)
@@ -2788,6 +2816,13 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
     beta_ef = out_fields[1]
     gamma_ef = out_fields[2]
     nu_ef = out_fields[3]
+    
+    if verbose == True:
+        print("alpha field: ",alpha_ef.T)
+        print("beta field: ",beta_ef.T)
+        print("gamma field: ",gamma_ef.T)
+        print("nu field: ",nu_ef.T)
+        
     
     
     # Create the four new waves as wave objects

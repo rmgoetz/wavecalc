@@ -139,7 +139,14 @@ class wave:
             self.efield = None
             
         elif efield is None:
-            if type(pol) is numpy.ndarray and numpy.shape(pol) == (3,1):
+            if type(pol) is str:
+                if pol == 'x':
+                    self.efield = numpy.array([[1.,0.,0.]]).T
+                elif pol == 'y':
+                    self.efield = numpy.array([[0.,1.,0.]]).T
+                elif pol == 'z':
+                    self.efield = numpy.array([[0.,0.,1.]]).T
+            elif type(pol) is numpy.ndarray and numpy.shape(pol) == (3,1):
                 sqr_mod = numpy.conj(pol).T @ pol
                 normpol = pol/numpy.sqrt(sqr_mod)
                 if isinstance(amp,(int,float)):
@@ -857,8 +864,45 @@ class bundle(UserList):
 class chain(UserList):
     ''' A class for a chain of surfaces '''
     def __init__(self,initdata=None):
+        if isinstance(initdata,wavecalc.classes.surface):
+            initdata = [initdata]
+        else:
+            truth = isinstance(initdata,list)*all(isinstance(x,wavecalc.classes.surface) for x in initdata)
+            if not truth:
+                raise Exception("Chains can only be made from surfaces and lists of surfaces")
         super().__init__(initdata)
 
+
+
+    # Overloaded methods            
+    #-----------------------------------------------------------------------------------------
+    def append(self,item):
+        if isinstance(item,wavecalc.classes.surface):
+            self.data.append(item)
+        elif isinstance(item,list):
+            if all(isinstance(x,wavecalc.classes.surface) for x in item):
+                for x in item:
+                    self.data.append(x)
+            else:
+                raise Exception("Can only append surfaces and lists of surfaces to a chain")
+        else:
+            raise Exception("Can only append surfaces and lists of surfaces to a chain")
+
+
+    
+    def __setitem__(self,i,item):
+        if isinstance(item,wavecalc.classes.surface):
+            self.data[i] = item
+        else:
+            raise Exception("Bundle components must be surfaces")
+
+
+
+    def insert(self,i,item):
+        if isinstance(item,wavecalc.classes.surface):
+            self.data.insert(i,item)
+        else:
+            raise Exception("Bundle comnponents must be surfaces")
         
 
 
