@@ -4,7 +4,7 @@ import wavecalc
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 8, 2019 16:39 EST
+last update: June 9, 2019 21:39 EST
 '''
 '''
 Table of Contents:
@@ -13,68 +13,68 @@ Table of Contents:
         
         crash --------------------------------- Line 100
         
-        modes --------------------------------- Line 
+        modes --------------------------------- Line 240
         
-        rotate -------------------------------- Line 
+        rotate -------------------------------- Line 354
         
-        reflect ------------------------------- Line 
+        reflect ------------------------------- Line 519
         
-        transmit ------------------------------ Line 
+        transmit ------------------------------ Line 624
         
     
     Background Functions:
         
-        aux_booker_interf --------------------- Line 
+        aux_booker_interf --------------------- Line 730
         
-        aux_check_same ------------------------ Line 
+        aux_check_same ------------------------ Line 883
         
-        aux_clean ----------------------------- Line 
+        aux_clean ----------------------------- Line 1004
         
-        aux_coat_handle ----------------------- Line 
+        aux_coat_handle ----------------------- Line 1109
         
-        aux_coord_transform ------------------- Line 
+        aux_coord_transform ------------------- Line 1205
         
-        aux_field_match ----------------------- Line 
+        aux_field_match ----------------------- Line 1337
         
-        aux_fixmode --------------------------- Line 
+        aux_fixmode --------------------------- Line 1446
         
-        aux_goodtest -------------------------- Line 
+        aux_goodtest -------------------------- Line 1585
         
-        aux_goodtest_wav ---------------------- Line
+        aux_goodtest_wav ---------------------- Line 1678
         
-        aux_goodtest_surf --------------------- Line
+        aux_goodtest_surf --------------------- Line 1746
         
-        aux_goodtest_med ---------------------- Line
+        aux_goodtest_med ---------------------- Line 1820
         
-        aux_maxwell_eigenvec ------------------ Line 
+        aux_maxwell_eigenvec ------------------ Line 1874
         
-        aux_modecalc -------------------------- Line 
+        aux_modecalc -------------------------- Line 1979
         
-        aux_quarttest ------------------------- Line 
+        aux_quarttest ------------------------- Line 2086
         
-        aux_realtest -------------------------- Line 
+        aux_realtest -------------------------- Line 2146
         
-        aux_rotate_copy ----------------------- Line 
+        aux_rotate_copy ----------------------- Line 2260
         
-        aux_rotmatrix ------------------------- Line 
+        aux_rotmatrix ------------------------- Line 2392
         
-        aux_rottens --------------------------- Line 
+        aux_rottens --------------------------- Line 2463
 
-        aux_rotvec ---------------------------- Line 
+        aux_rotvec ---------------------------- Line 2515
         
-        aux_waveinterf ------------------------ Line 
+        aux_waveinterf ------------------------ Line 2567
            
         
     Under Construction:
         
-        aux_complex_killer -------------------- Line
+        aux_complex_killer -------------------- Line 2852
         
-        aux_ferrari --------------------------- Line 
+        aux_ferrari --------------------------- Line 2909
         
-        aux_root_order ------------------------ Line 
+        aux_root_order ------------------------ Line 2958
 
 
-Last line check: June 2, 2019
+Last line check: June 9, 2019
 
 '''
 
@@ -1295,9 +1295,9 @@ def aux_coord_transform(k,s,verbose=None):
     # Verbosity
     #---------------------------------------------------------------------------------------------------
     if verbose==True:
-        print("x' =",xp)
-        print("y' =",yp)
-        print("z' =",zp)
+        print("x' =",xp.T)
+        print("y' =",yp.T)
+        print("z' =",zp.T)
         print('k_hat . s_hat = ',kdotS/knorm)
         print('U = ',U)
         print('Uinv = ',Uinv)
