@@ -2685,7 +2685,7 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
             print("k_alpha = ",k_alpha.T)
             print("k_ beta = ",k_beta.T)
             print("k_gamma = ",k_gamma.T)
-            print("k_ nu = ",k_nu.T)
+            print("k_nu = ",k_nu.T)
     
     
     # Build the arrays of solutions
@@ -2912,8 +2912,6 @@ def aux_complex_killer(ob):
         return ob
     else:
         return ob
-       
-#
 #
 #
 #
@@ -3016,5 +3014,98 @@ def aux_root_order(lis):
         return sol
     elif len(complexes)==2:
         return 
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+def aux_wc_eigenvec(mat,eigenval):
+    ''' A behind-the-scenes function for finding eigenvectors of a 3 x 3 matrix for a given eigenvalue '''
+    
+    ''' To be developed further in the event that numpy algorithms fail me  '''
+    ####################################################################################################
+    #                                                                                                  #
+    # The eigenvector finder                                                                           #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    #      mat - The matrix given as a (3,3) numpy ndarray.                                            #
+    # eigenval - The eigenvalue given as a float, int, or complex.                                     # 
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Outputs the corresponding eigenvector(s) as a (3,1) numpy ndarray.                               #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 11, 2019                                                                      #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    
+    ID = numpy.array([[1.,0.,0.],[0.,1.,0.],[0.,0.,1.]])
+    
+    # For tracking column swaps
+    #---------------------------------------------------------------------------------------------------
+    check = numpy.array([0,1,2])
+    
+    # Make a deepcopy of the input matrix and convert to the augmented matrix
+    #---------------------------------------------------------------------------------------------------
+    MAT = copy.deepcopy(mat)
+    MAT = MAT - eigenval*ID
+    
+    # Find the absolute maximal entry of the matrix and put it in the first column, top row
+    #---------------------------------------------------------------------------------------------------
+    q = numpy.argmax(abs(MAT))
+    i_max = q // 3 
+    j_max = q % 3
+    
+    MAT[[0,i_max]] = MAT[[i_max,0]]
+    MAT[0:3,[0,j_max]] = MAT[0:3,[j_max,0]]
+    check[[0,j_max]] = check[[j_max,0]]
+    
+    # Find the absolute maximal entry of the first column and swap its row with the top row
+    #---------------------------------------------------------------------------------------------------
+    q = numpy.argmax(abs(MAT[:,0]))
+    MAT[[0,q]] = MAT[[q,0]]
+    
+    # Eliminate all entries of the first column except for the first row entry
+    #---------------------------------------------------------------------------------------------------
+    MAT[[1]] = MAT[[1]] - (MAT[1,0]/MAT[0,0])*MAT[[0]]
+    MAT[[2]] = MAT[[2]] - (MAT[2,0]/MAT[0,0])*MAT[[0]]
+    
+    # Check to see if the second column elements are large enough (> 1e-14)
+    #---------------------------------------------------------------------------------------------------
+    
+
+    # Find the absolute maximal entry of the second column excluding the first row and swap its row with
+    # the second row.
+    #---------------------------------------------------------------------------------------------------
+    q = numpy.argmax(abs(MAT[[1,2],1]))+1
+    MAT[[1,q]] = MAT[[q,1]]
+    
+    # Eliminate the second column, third row element to get matrix in row echelon form
+    #---------------------------------------------------------------------------------------------------
+    MAT[[2]] = MAT[[2]] - (MAT[2,1]/MAT[1,1])*MAT[[1]]
 
 
