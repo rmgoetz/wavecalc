@@ -15,7 +15,7 @@ from wavecalc.functions import aux_clean
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 8, 2019 16:39 EST
+last update: June 12, 2019
 """
 '''
 Table of Contents
@@ -237,7 +237,7 @@ class wave:
             
      
         
-    def poynting(self,scale=None):
+    def poynting(self,scale=None,norm=None):
         if goodtest(self,test_type='wave'):
             if scale is None or not isinstance(scale,(int,float)):
                 scale = 1
@@ -246,6 +246,9 @@ class wave:
             hh = numpy.cross(kk.T,ee.T).T 
             hhc = numpy.conj(hh)
             S = 0.5*scale*numpy.cross(ee.T,hhc.T).T
+            if norm == True:
+                Snorm = numpy.sqrt(numpy.conj(S.T) @ S)[0,0]
+                S = S/Snorm    
             return S
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
@@ -257,9 +260,9 @@ class wave:
         
     
     
-    def fixmode(self,ab=None,k0=None,verbose=None):
+    def fixmode(self,ab=None,k0=None,conserve=None,verbose=None):
         if goodtest(self,test_type='wave'):
-            back = aux_fixmode(wave=self,ab=ab,k0=k0,verbose=verbose)
+            back = aux_fixmode(wave=self,ab=ab,k0=k0,conserve=conserve,verbose=verbose)
             self.kvec = back[0]
             self.efield = back[1]
         else:

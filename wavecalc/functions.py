@@ -5,7 +5,7 @@ import copy
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 9, 2019 21:39 EST
+last update: June 12, 2019
 '''
 '''
 Table of Contents:
@@ -1450,7 +1450,7 @@ def aux_field_match(k_alpha,k_beta,k_gamma,k_nu,alpha,beta,gamma,nu,kin,Ein,verb
 #
 #         
 #    
-def aux_fixmode(wave=None,ab=None,k0=None,verbose=None):
+def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
     ''' A behind-the-scenes function for rectifying waves with their media '''
     
    
@@ -1459,19 +1459,19 @@ def aux_fixmode(wave=None,ab=None,k0=None,verbose=None):
     # The fixmode function                                                                             #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #   kvec - The wave vector of the wave to be fixed, as a (3,1) numpy ndarray.                      #
-    # efield - The wave vector of the wave to be fixed, as a (3,1) numpy ndarray.                      #
-    #    med - The medium of the wave as a (3,3) numpy ndarray.                                        #
-    #     ab - Whether the a- or b-wave are to be chosen. If set to 0, the a-wave, if 1 the b-wave. If #
-    #          left unspecified, defaults to 0.                                                        #
-    #     k0 - The wave number in vacuum, given as an int, float, or complex. Useful for normalization #
-    #          when needed. If unspecified, defaults to 1.                                             #
+    #      wav - The input wave to be fixed as a wavecalc wave object.                                 #
+    #       ab - Whether the a- or b-wave are to be chosen. If set to 0, the a-wave, if 1 the b-wave.  #
+    #            If left unspecified, defaults to 0.                                                   #
+    #       k0 - The wave number in vacuum, given as an int, float, or complex. Useful for             #
+    #            normalization when needed. If unspecified, defaults to 1.                             #
+    # conserve - If True, modifies the electric field amplitude so that energy is conserved.           #
+    #  verbose - If True, prints more information about the calculation.                               #
     #                                                                                                  # 
     #                                                                                                  #
     # Outputs a list of the new wave vector and electric field.                                        #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: June 2, 2019                                                                       #
+    # Last Updated: June 12, 2019                                                                      #
     #                                                                                                  #
     ####################################################################################################
     
@@ -1487,9 +1487,19 @@ def aux_fixmode(wave=None,ab=None,k0=None,verbose=None):
     
     if ab is None:
         ab = 0
+        if verbose == True:
+            print("Choosing the a-wave")
         
     if ab != 0 and ab != 1:
         ab = 0
+        if verbose == True:
+            print("Choosing the a-wave")
+            
+    if verbose == True:
+        if ab == 0:
+            print("a-wave selected")
+        elif ab == 1:
+            print("b-wave selected")
     
     if k0 is None:
         k0 = 1
@@ -2856,6 +2866,52 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
             print('gamma-wave (trans) effective index=',n_gamma)
             print('nu-wave (trans) effective index=',n_nu)
         return both
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
+def aux_check_ab(wav):
+    ''' A behind-the-scenes function for determining whether the mode is an a or b mode, or neither '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The coating function                                                                             #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # wav - The wavecalc wave object to be tested.                                                     #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Returns 0 for a mode, 1 for b mode and SOMETHING for neither.                                    #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 12, 2019                                                                      #
+    #                                                                                                  #
+    ####################################################################################################
 #
 #
 #
