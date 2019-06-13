@@ -27,6 +27,8 @@ Table of Contents:
         
         aux_booker_interf --------------------- Line 730
         
+        aux_check_ab -------------------------- Line
+        
         aux_check_same ------------------------ Line 883
         
         aux_clean ----------------------------- Line 1004
@@ -881,6 +883,72 @@ def aux_booker_interf(kx,med1,med2,verbose=None):
 #
 #         
 #    
+def aux_check_ab(wav):
+    ''' A behind-the-scenes function for determining whether the mode is an a or b mode, or neither '''
+    
+   
+    ####################################################################################################
+    #                                                                                                  #
+    # The coating function                                                                             #
+    #                                                                                                  #
+    # INPUTS:                                                                                          #
+    # wav - The wavecalc wave object to be tested.                                                     #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Returns 0 for a mode, 1 for b mode and 'neither' for neither.                                    #
+    #                                                                                                  # 
+    #                                                                                                  #
+    # Last Updated: June 13, 2019                                                                      #
+    #                                                                                                  #
+    ####################################################################################################
+    
+    if isinstance(wav.kvec,numpy.ndarray):
+        kvec = copy.deepcopy(wav.kvec)
+        med = copy.deepcopy(wav.medium)
+        
+        out = aux_modecalc(kvec,med)
+        kau = out[2]
+        kbu = out[3]
+        
+        kconj = numpy.conj(kvec)
+        knorm = numpy.sqrt(kconj.T @ kvec)[0,0]
+        
+        if abs(knorm-kau)< 1e-10:
+            return 0
+        elif abs(knorm-kbu)< 1e-10:
+            return 1
+        else:
+            return 'neiter'
+    else:
+        return 'neither'
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#
+#
+#
+#
+#
+#
+#         
+#    
 def aux_check_same(lis,switch=None):
     ''' A behind-the-scenes function for combining waves with the same wave vector '''
     
@@ -1450,7 +1518,7 @@ def aux_field_match(k_alpha,k_beta,k_gamma,k_nu,alpha,beta,gamma,nu,kin,Ein,verb
 #
 #         
 #    
-def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
+def aux_fixmode(wave,ab=None,k0=None,conserve=None,verbose=None):
     ''' A behind-the-scenes function for rectifying waves with their media '''
     
    
@@ -1471,12 +1539,10 @@ def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
     # Outputs a list of the new wave vector and electric field.                                        #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: June 12, 2019                                                                      #
+    # Last Updated: June 13, 2019                                                                      #
     #                                                                                                  #
     ####################################################################################################
     
-    if wave is None:
-        return
     
     reals = aux_realtest(wave)
     
@@ -1510,6 +1576,13 @@ def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
     if med is None:
         med = numpy.array([[1.,0.,0.],[0.,1.,0.],[0.,0.,1.]])
         print("No medium found, assuming free space")
+        
+    if efield is None:
+        conserve = False
+        
+    if conserve == True:
+        dfieldC = numpy.conj(med @ efield)
+        old_u = (efield.T @ dfieldC)[0,0]
     
     ab = ab+2
     
@@ -1528,9 +1601,7 @@ def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
     # get the new electric field
     #---------------------------------------------------------------------------------------------------
     if efield is None:
-        new_efield = aux_maxwell_eigenvec(new_kvec,med,k0,verbose=verbose)
-        if reals[2]:
-            new_efield = new_efield.real
+        new_efield = None
     
     else:
         
@@ -1565,6 +1636,11 @@ def aux_fixmode(wave=None,ab=None,k0=None,conserve=None,verbose=None):
         if reals[1] and reals[2]:
             new_efield = new_efield.real
         
+    
+    if conserve == True:
+        new_dfieldC = numpy.conj(med @ new_efield)
+        new_u = (new_efield.T @ new_dfieldC)[0,0]
+        new_efield = numpy.sqrt(old_u/new_u)*new_efield
     
     
     # return the new kvec and efield
@@ -2002,18 +2078,18 @@ def aux_modecalc(vector,medium,k0=None,verbose=None):
     # The modes auxiliary function.                                                                    #
     #                                                                                                  #
     # INPUTS:                                                                                          #
-    #      ob - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
-    #     med - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
+    #  vector - The input wave, given as a wavecalc wave object or (3,1) numpy array.                  #
+    #  medium - The medium of the transmission, given as a wavecalc medium object or a (3,3) numpy     #
     #           array.                                                                                 #
     #      k0 - The magnitude of the wave vector in vacuum, useful for normalizing the results, given  #
     #           as an int or a float.                                                                  #                                                                 
     # verbose - If set to True, prints more information about the calculation.                         #
     #                                                                                                  # 
     #                                                                                                  #
-    # Outputs a list of wave modes in the medium parallel to ob.                                       #
+    # Outputs a list of the four wave mode amplitudes in the medium parallel to ob.                    #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: May 25, 2019                                                                       #
+    # Last Updated: June 13, 2019                                                                      #
     #                                                                                                  #
     ####################################################################################################
  
@@ -2024,7 +2100,8 @@ def aux_modecalc(vector,medium,k0=None,verbose=None):
     k = vector/vecnorm
     
     if k0 is None:
-        print("Assuming k0 = 1")
+        if verbose == True:
+            print("Assuming k0 = 1")
         k0 = 1
     elif (not isinstance(k0,int) and not isinstance(k0,float)):
         raise Exception("If specified, k0 must be given as an int or a float")
@@ -2866,53 +2943,6 @@ def aux_waveinterf(k,ef,s,ep1,ep2,k0,act=None,coating=None,same=None,verbose=Non
             print('gamma-wave (trans) effective index=',n_gamma)
             print('nu-wave (trans) effective index=',n_nu)
         return both
-#
-#
-#
-#
-#
-#         
-#
-#
-#
-#
-#
-#
-#         
-#
-#
-#
-#
-#
-#
-#         
-#
-#
-#
-#
-#
-#
-#         
-#    
-def aux_check_ab(wav):
-    ''' A behind-the-scenes function for determining whether the mode is an a or b mode, or neither '''
-    
-   
-    ####################################################################################################
-    #                                                                                                  #
-    # The coating function                                                                             #
-    #                                                                                                  #
-    # INPUTS:                                                                                          #
-    # wav - The wavecalc wave object to be tested.                                                     #
-    #                                                                                                  # 
-    #                                                                                                  #
-    # Returns 0 for a mode, 1 for b mode and SOMETHING for neither.                                    #
-    #                                                                                                  # 
-    #                                                                                                  #
-    # Last Updated: June 12, 2019                                                                      #
-    #                                                                                                  #
-    ####################################################################################################
-#
 #
 #
 #

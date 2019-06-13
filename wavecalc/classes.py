@@ -9,8 +9,7 @@ from wavecalc.functions import transmit as transmit
 from wavecalc.functions import reflect as reflect
 from wavecalc.functions import crash as crash
 from wavecalc.functions import aux_goodtest as goodtest
-from wavecalc.functions import aux_fixmode
-from wavecalc.functions import aux_clean 
+from wavecalc.functions import aux_fixmode, aux_clean, aux_check_ab
 """
 Created on Mon May 20 23:14:02 2019
 
@@ -255,8 +254,16 @@ class wave:
 
 
 
-    def rotate(self,ang,axis,medmove=None,verbose=None):
-        rotate_copy(self,ang,axis,medmove,verbose)
+    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+        if goodtest(self,test_type='wave'):
+            medQ = isinstance(self.medium,numpy.ndarray)
+            if fix == True and medQ:
+                back = aux_check_ab(self)
+            rotate_copy(self,ang,axis,medmove,verbose)
+            if fix == True and medQ:
+                self.fixmode(ab=back,conserve=True)
+        else:
+            raise Exception("Wave object is not well-formed, check for improper attributes")
         
     
     
@@ -292,6 +299,20 @@ class wave:
             self.kvec = aux_clean(self.kvec,tol)
             self.efield = aux_clean(self.efield,tol)
             self.medium = aux_clean(self.medium,tol)
+        else:
+            raise Exception("Wave object is not well-formed, check for improper attributes")
+            
+            
+            
+    def k(self):
+        if goodtest(self):
+            if isinstance(self.kvec,numpy.ndarray):
+                vec = copy.deepcopy(self.kvec)
+                vecC = numpy.conj(vec)
+                norm = numpy.sqrt(vecC.T @ vec)[0,0]
+                return norm.real
+            else:
+                raise Exception("No kvec found")
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
 
