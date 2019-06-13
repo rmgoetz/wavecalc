@@ -5,7 +5,7 @@ import copy
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 12, 2019
+last update: June 13, 2019
 '''
 '''
 Table of Contents:

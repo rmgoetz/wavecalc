@@ -14,7 +14,7 @@ from wavecalc.functions import aux_fixmode, aux_clean, aux_check_ab
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 12, 2019
+last update: June 13, 2019
 """
 '''
 Table of Contents
@@ -304,13 +304,16 @@ class wave:
             
             
             
-    def k(self):
+    def k(self,k0=None):
         if goodtest(self):
             if isinstance(self.kvec,numpy.ndarray):
                 vec = copy.deepcopy(self.kvec)
                 vecC = numpy.conj(vec)
                 norm = numpy.sqrt(vecC.T @ vec)[0,0]
-                return norm.real
+                if isinstance(k0,(int,float)) and k0>0:
+                    return k0*norm.real
+                else:
+                    return norm.real
             else:
                 raise Exception("No kvec found")
         else:
@@ -491,7 +494,9 @@ class surface:
     
     # Custom methods            
     #-----------------------------------------------------------------------------------------
-    def rotate(self,ang,axis,medmove=None,verbose=None):
+    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+        if fix is not None:
+            print("The fix option has no meaning when rotating surfaces")
         rotate_copy(self,ang,axis,medmove,verbose)
         
         
@@ -736,7 +741,9 @@ class medium:
 
 
 
-    def rotate(self,ang,axis,medmove=None,verbose=None):
+    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+        if fix is not None:
+            print("The fix option has no meaning when rotating media")
         rotate_copy(self,ang,axis,medmove,verbose)
 
 
