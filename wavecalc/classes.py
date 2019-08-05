@@ -14,7 +14,7 @@ from wavecalc.functions import aux_fixmode, aux_clean, aux_check_ab
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: June 13, 2019
+last update: August 1, 2019
 """
 '''
 Table of Contents
@@ -29,6 +29,9 @@ Table of Contents
         fixmode ------------------------------- Line
         index --------------------------------- Line
         clean --------------------------------- Line
+        k ------------------------------------- Line
+        propagate ----------------------------- Line
+        jones --------------------------------- Line
         __add__ ------------------------------- Line
         __sub__ ------------------------------- Line
         __pos__ ------------------------------- Line
@@ -112,7 +115,15 @@ Last line check June 8, 2019
 ####################################################################################
 class wave:
     ''' A class for EM waves '''
-    def __init__(self,kvec=None,efield=None,medium=None,pol=None,amp=None,everything=None):
+    def __init__(self,kvec=None,efield=None,phase=None,**kwargs):
+        
+        medium = kwargs.pop('medium',None)
+        pol = kwargs.pop('pol',None)
+        amp = kwargs.pop('amp',None)
+        everything = kwargs.pop('everything',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined arguments passed to wave.__init__")
         
         # kvec attribute
         #-------------------------------------------------------------------------------------        
@@ -152,8 +163,8 @@ class wave:
                     self.efield = amp*normpol
                 else:
                     self.efield = normpol
-            elif kvec is None and isinstance(amp,(int,float)):
-                self.efield = numpy.array([amp,0.,0.]).T
+            elif kvec is None and isinstance(amp,(int,float,complex)):
+                self.efield = numpy.array([[amp,0.,0.]]).T
             elif kvec is None:
                 self.efield = numpy.array([[1.,0.,0.]]).T
             else:
@@ -167,6 +178,24 @@ class wave:
         
         else:
             raise Exception("Must specify efield as (3,1) numpy.ndarray, 'random', False, or None")        
+        
+        
+        # phase attribute
+        #-------------------------------------------------------------------------------------
+        if phase is False or everything is False:
+            self.phase = None
+            
+        elif phase is None:
+            self.phase = 0.
+       
+        elif isinstance(phase,(int,float,complex)):
+            self.phase = phase
+        
+        elif phase == 'random':
+            self.phase = 2*numpy.pi*random.rand()
+        
+        else:
+            raise Exception("Must specify phase as an int, float, complex, 'random', False, or None")
         
         
         # medium attribute
@@ -204,7 +233,7 @@ class wave:
                 return normpol
             else:
                 print("No electric field found")
-        elif isinstance(polar,numpy.ndarray) and numpy.shape(polar) == (3,1):
+        elif type(polar) is numpy.ndarray and numpy.shape(polar) == (3,1):
             sqr_mod = (numpy.conj(self.efield).T @ self.efield)[0,0].real
             norm = numpy.sqrt(sqr_mod)
             sqr_mod_pol = (numpy.conj(polar).T @ polar)[0,0].real
@@ -236,7 +265,14 @@ class wave:
             
      
         
-    def poynting(self,scale=None,norm=None):
+    def poynting(self,**kwargs):
+        
+        scale = kwargs.pop('scale',None)
+        norm = kwargs.pop('norm',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined argument passed to wave.poynting")
+        
         if goodtest(self,test_type='wave'):
             if scale is None or not isinstance(scale,(int,float)):
                 scale = 1
@@ -245,7 +281,7 @@ class wave:
             hh = numpy.cross(kk.T,ee.T).T 
             hhc = numpy.conj(hh)
             S = 0.5*scale*numpy.cross(ee.T,hhc.T).T
-            if norm == True:
+            if norm:
                 Snorm = numpy.sqrt(numpy.conj(S.T) @ S)[0,0]
                 S = S/Snorm    
             return S
@@ -254,20 +290,37 @@ class wave:
 
 
 
-    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+    def rotate(self,ang,axis,**kwargs):
+        
+        medmove = kwargs.pop('medmove',None)
+        fix = kwargs.pop('fix',None)
+        verbose = kwargs.pop('verbose',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined argument passed to wave.rotate")
+        
         if goodtest(self,test_type='wave'):
             medQ = isinstance(self.medium,numpy.ndarray)
-            if fix == True and medQ:
+            if fix and medQ:
                 back = aux_check_ab(self)
             rotate_copy(self,ang,axis,medmove,verbose)
-            if fix == True and medQ:
+            if fix and medQ:
                 self.fixmode(ab=back,conserve=True)
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
         
     
     
-    def fixmode(self,ab=None,k0=None,conserve=None,verbose=None):
+    def fixmode(self,**kwargs):
+        
+        ab = kwargs.pop('ab',None)
+        k0 = kwargs.pop('k0',None)
+        conserve = kwargs.pop('conserve',None)
+        verbose = kwargs.pop('verbose',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined argument passed to wave.fixmode")
+        
         if goodtest(self,test_type='wave'):
             back = aux_fixmode(wave=self,ab=ab,k0=k0,conserve=conserve,verbose=verbose)
             self.kvec = back[0]
@@ -295,7 +348,7 @@ class wave:
             
     
     def clean(self,tol=None):
-        if goodtest(self):
+        if goodtest(self,test_type='wave'):
             self.kvec = aux_clean(self.kvec,tol)
             self.efield = aux_clean(self.efield,tol)
             self.medium = aux_clean(self.medium,tol)
@@ -305,8 +358,8 @@ class wave:
             
             
     def k(self,k0=None):
-        if goodtest(self):
-            if isinstance(self.kvec,numpy.ndarray):
+        if goodtest(self,test_type='wave'):
+            if type(self.kvec) is numpy.ndarray:
                 vec = copy.deepcopy(self.kvec)
                 vecC = numpy.conj(vec)
                 norm = numpy.sqrt(vecC.T @ vec)[0,0]
@@ -316,6 +369,42 @@ class wave:
                     return norm.real
             else:
                 raise Exception("No kvec found")
+        else:
+            raise Exception("Wave object is not well-formed, check for improper attributes")
+            
+            
+            
+    def propagate(self,vec,k0=None,wrap=None):
+        if k0 is None:
+            k0 = 1
+        elif not isinstance(k0,(int,float)) or k0<=0:
+            k0 = 1
+            print("Invalid input for k0, setting equal to 1")
+        if goodtest(self,test_type='wave'):
+            if type(vec) is numpy.ndarray and numpy.shape(vec)==(3,1):
+                currentphase = copy.deepcopy(self.phase)
+                kvec = copy.deepcopy(self.kvec)
+                newphase = currentphase + k0*(kvec.T @ vec)[0,0]
+                if wrap:
+                    self.phase = newphase % (2*numpy.pi)
+                else:
+                    self.phase = newphase
+            else:
+                raise Exception("Propagation direction must be specified as a (3,1) numpy array")
+        else:
+            raise Exception("Wave object is not well-formed, check for improper attributes")
+            
+            
+            
+    def jones(self):
+        if goodtest(self,test_type='wave'):
+            if type(self.efield) is numpy.ndarray:
+                if isinstance(self.phase,(int,float,complex)):
+                    return numpy.exp(1j*self.phase)*self.efield
+                else:
+                    return self.efield
+            else:
+                raise Exception("No electric field found")
         else:
             raise Exception("Wave object is not well-formed, check for improper attributes")
 
@@ -387,7 +476,8 @@ class wave:
             ks = numpy.prod(self.kvec == other.kvec)
             es = numpy.prod(self.efield == other.efield)
             ms = numpy.prod(self.medium == other.medium)
-            if ks*es*ms:
+            ph = self.phase == other.phase
+            if ks*es*ms*ph:
                 return True
             else:
                 return False
@@ -413,7 +503,17 @@ class wave:
 ########################################################################################################################
 class surface:
     ''' A class for planar interfaces '''
-    def __init__(self,normal=None,into=None,out=None,coat=None,everything=None):
+    def __init__(self,normal=None,**kwargs):
+        
+        into = kwargs.pop('into',None)
+        out = kwargs.pop('out',None)
+        coat = kwargs.pop('coat',None)
+        everything = kwargs.pop('everything',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined arguments passed to surface.__init__")
+        
+        
         
         # normal attribute
         #-------------------------------------------------------------------------------------
@@ -483,9 +583,9 @@ class surface:
         
         if coat is not None:
             if (coat == 'HR' or coat == 'hr'):
-                self.coat = coat
+                self.coat = 'HR'
             elif (coat == 'AR' or coat == 'ar'):
-                self.coat = coat
+                self.coat = 'AR'
             else:
                 raise Exception("Must specify coat as 'HR' or 'AR'")
         else:
@@ -494,14 +594,22 @@ class surface:
     
     # Custom methods            
     #-----------------------------------------------------------------------------------------
-    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+    def rotate(self,ang,axis,**kwargs):
+        
+        medmove = kwargs.pop('medmove',None)
+        fix = kwargs.pop('fix',None)
+        verbose = kwargs.pop('verbose',None)
+        
+        if len(kwargs) != 0:
+            print ("Undefined argument passed to surface.rotate")
+        
         if fix is not None:
             print("The fix option has no meaning when rotating surfaces")
         rotate_copy(self,ang,axis,medmove,verbose)
         
         
     def clean(self,tol=None):
-        if goodtest(self):
+        if goodtest(self,test_type='surface'):
             self.normal = aux_clean(self.normal,tol)
             self.out = aux_clean(self.out,tol)
             self.into = aux_clean(self.into,tol)
@@ -611,14 +719,21 @@ class surface:
 ########################################################################################################################        
 class medium:
     ''' A class for dielectric media '''
-    def __init__(self,epx=None,epy=None,epz=None,ep_all=None,epsilon=None,everything=None):
+    def __init__(self,epx=None,epy=None,epz=None,**kwargs):
+        
+        ep_all = kwargs.pop('ep_all',None)
+        epsilon = kwargs.pop('epsilon',None)
+        everything = kwargs.pop('everything',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined arguments passed to medium.__init__")
         
         # epsilon attribute
         #-------------------------------------------------------------------------------------
-        if (isinstance(epx,complex) 
-            or isinstance(epy,complex) 
-            or isinstance(epz,complex) 
-            or isinstance(ep_all,complex)):
+        if (type(epx) is complex 
+            or type(epy) is complex 
+            or type(epz) is complex 
+            or type(ep_all) is complex):
             dat = complex
         else:
             dat = float
@@ -630,21 +745,13 @@ class medium:
             self.epsilon = numpy.array([[1.,0.,0.],
                                         [0.,1.,0.],
                                         [0.,0.,1.]],dtype=dat)
-            if (isinstance(epx,int) 
-                or isinstance(epx,float) 
-                or isinstance(epx,complex)):
+            if isinstance(epx,(int,float,complex)):
                 self.epsilon[0,0] = epx
-            if (isinstance(epy,int) 
-                or isinstance(epy,float) 
-                or isinstance(epy,complex)):
+            if isinstance(epy,(int,float,complex)):
                 self.epsilon[1,1] = epy
-            if (isinstance(epz,int) 
-                or isinstance(epz,float) 
-                or isinstance(epz,complex)):
+            if isinstance(epz,(int,float,complex)):
                 self.epsilon[2,2] = epz
-            if (isinstance(ep_all,int) 
-                or isinstance(ep_all,float) 
-                or isinstance(ep_all,complex)):
+            if isinstance(ep_all,(int,float,complex)):
                 self.epsilon[0,0] = ep_all
                 self.epsilon[1,1] = ep_all
                 self.epsilon[2,2] = ep_all
@@ -670,15 +777,14 @@ class medium:
     # Custom methods            
     #-----------------------------------------------------------------------------------------
     def epx(self,epsilon_xx=None):
-        if (not isinstance(self.epsilon,numpy.ndarray) 
+        if (type(self.epsilon) is not numpy.ndarray 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
         if epsilon_xx is None:
             return self.epsilon[0,0]
-        elif (isinstance(epsilon_xx,int) 
-            or isinstance(epsilon_xx,float)):
+        elif isinstance(epsilon_xx,(int,float)):
             self.epsilon[0,0] = epsilon_xx
-        elif isinstance(epsilon_xx,complex):
+        elif type(epsilon_xx) is complex:
             self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
             self.epsilon[0,0] = epsilon_xx
         else:
@@ -687,13 +793,12 @@ class medium:
 
 
     def epy(self,epsilon_yy=None):
-        if (not isinstance(self.epsilon,numpy.ndarray) 
+        if (type(self.epsilon) is not numpy.ndarray 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
         if epsilon_yy is None:
             return self.epsilon[1,1]
-        elif (isinstance(epsilon_yy,int) 
-            or isinstance(epsilon_yy,float)):
+        elif isinstance(epsilon_yy,(int,float)):
             self.epsilon[1,1] = epsilon_yy
         elif isinstance(epsilon_yy,complex):
             self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
@@ -704,13 +809,12 @@ class medium:
 
 
     def epz(self,epsilon_zz=None):
-        if (not isinstance(self.epsilon,numpy.ndarray) 
+        if (type(self.epsilon) is not numpy.ndarray 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
         if epsilon_zz is None:
             return self.epsilon[2,2]
-        elif (isinstance(epsilon_zz,int) 
-            or isinstance(epsilon_zz,float)):
+        elif isinstance(epsilon_zz,(int,float)):
             self.epsilon[2,2] = epsilon_zz
         elif isinstance(epsilon_zz,complex):
             self.epsilon = numpy.asarray(self.epsilon,dtype=complex)
@@ -721,13 +825,12 @@ class medium:
 
 
     def ep_all(self,epsilon_all=None):
-        if (not isinstance(self.epsilon,numpy.ndarray) 
+        if (type(self.epsilon) is not numpy.ndarray 
             or not numpy.shape(self.epsilon)==(3,3)):
             raise Exception("Medium must have proper epsilon attribute")
         if epsilon_all is None:
             return [self.epsilon[0,0],self.epsilon[1,1],self.epsilon[2,2]]
-        elif (isinstance(epsilon_all,int) 
-            or isinstance(epsilon_all,float)):
+        elif isinstance(epsilon_all,(int,float)):
             self.epsilon[0,0] = epsilon_all
             self.epsilon[1,1] = epsilon_all
             self.epsilon[2,2] = epsilon_all
@@ -741,7 +844,15 @@ class medium:
 
 
 
-    def rotate(self,ang,axis,medmove=None,fix=None,verbose=None):
+    def rotate(self,ang,axis,**kwargs):
+        
+        medmove = kwargs.pop('medmove',None)
+        fix = kwargs.pop('fix',None)
+        verbose = kwargs.pop('verbose',None)
+        
+        if len(kwargs) != 0:
+            print("Undefined argument passed to medium.rotate")
+        
         if fix is not None:
             print("The fix option has no meaning when rotating media")
         rotate_copy(self,ang,axis,medmove,verbose)
