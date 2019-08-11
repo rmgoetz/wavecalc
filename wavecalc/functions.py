@@ -81,7 +81,8 @@ Last line check: June 9, 2019
 
 '''
 
-
+# TODO: Line checks
+# TODO: Fix coating handling to be physically meaningful
 
 
 
@@ -1679,9 +1680,30 @@ def aux_goodtest_wav(wav):
     # Outputs True if the wave object is well formed, and False otherwise.                             #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: July 31, 2019                                                                      #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    
+    good = True
+    
+    good &= wav.kvec is None or (type(wav.kvec) is numpy.ndarray 
+                                 and numpy.shape(wav.kvec) == (3,1))
+    
+    good &= wav.efield is None or (type(wav.efield) is numpy.ndarray 
+                                   and numpy.shape(wav.efield) == (3,1))
+    
+    good &= wav.phase is None or isinstance(wav.phase,(int,float,complex))
+    
+    good &= wav.medium is None or (type(wav.medium) is numpy.ndarray 
+                                   and numpy.shape(wav.medium) == (3,3))
+    
+    
+    return good
+        
+    
+    '''
+    
     
     if wav.kvec is None or (type(wav.kvec) is numpy.ndarray 
                                and numpy.shape(wav.kvec) == (3,1)):
@@ -1711,7 +1733,7 @@ def aux_goodtest_wav(wav):
         mtest = False
         
     good = ktest*etest*ptest*mtest
-    return good
+    return good '''
 #
 #
 #
@@ -1737,9 +1759,30 @@ def aux_goodtest_surf(surf):
     # Outputs True if the surface object is well formed, and False otherwise.                          #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    
+    good = True
+    
+    good &= surf.normal is None or (type(surf.normal) is numpy.ndarray 
+                                    and numpy.shape(surf.normal) == (3,1))
+    
+    good &= surf.out is None or (type(surf.out) is numpy.ndarray 
+                                 and numpy.shape(surf.out) == (3,3))
+    
+    good &= surf.into is None or (type(surf.into) is numpy.ndarray 
+                                  and numpy.shape(surf.into) == (3,3))
+    
+    good &= surf.coat is None or surf.coat in ['HR','AR']
+    
+    
+    return good
+    
+    
+    '''
+    
     
     if surf.normal is None or (type(surf.normal) is numpy.ndarray 
                                  and numpy.shape(surf.normal) == (3,1)):
@@ -1767,7 +1810,7 @@ def aux_goodtest_surf(surf):
         ctest = False
             
     good = ntest*otest*itest*ctest
-    return good
+    return good '''
 #
 #
 #
@@ -1793,9 +1836,17 @@ def aux_goodtest_med(med):
     # Outputs True if the medium object is well formed, and False otherwise.                           #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: June 5, 2019                                                                       #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    good = med.epsilon is None or (type(med.epsilon) is numpy.ndarray 
+                                   and numpy.shape(med.epsilon) == (3,3))
+    
+    return good
+
+    
+    '''
     
     if med.epsilon is None or (type(med.epsilon) is numpy.ndarray 
                                   and numpy.shape(med.epsilon) == (3,3)):
@@ -1803,7 +1854,7 @@ def aux_goodtest_med(med):
     else:
         eptest = False
         
-    return eptest
+    return eptest '''
 #
 #
 #
