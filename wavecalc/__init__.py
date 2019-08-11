@@ -13,6 +13,6 @@ import wavecalc.composites
 
 str1 = "Importing wavecalc.classes as obj \n"
 str2 = "Importing wavecalc.functions as fun \n"
-#str3 = "Working in a development branch of wavecalc"
+str3 = "Working in a development branch of wavecalc"
 
 print(str1+str2+str3)
