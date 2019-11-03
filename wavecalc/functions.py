@@ -2207,7 +2207,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Rotates the object in accordance with its transformation properties.                             #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: August 23, 2019                                                                    #
     #                                                                                                  #
     ####################################################################################################
     
