@@ -2225,7 +2225,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle wave instances
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,wavecalc.classes.wave):
-        if not aux_goodtest_wav(ob,test_type='wave'):
+        if not aux_goodtest_wav(ob):
             raise Exception('Your wavecalc wave has improper attributes')
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
@@ -2250,7 +2250,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle surface instances
     #---------------------------------------------------------------------------------------------------
     elif isinstance(ob,wavecalc.classes.surface):
-        if not aux_goodtest_surf(ob,test_type='surface'):
+        if not aux_goodtest_surf(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         if medmove == 'only':
             if ob.out is not None:
@@ -2284,7 +2284,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle medium instances
     #---------------------------------------------------------------------------------------------------        
     elif isinstance(ob,wavecalc.classes.medium):
-        if not aux_goodtest_med(ob,test_type='medium'):
+        if not aux_goodtest_med(ob):
             raise Exception('Your wavecalc medium has improper attributes')
         if not medmove is None:
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
