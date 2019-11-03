@@ -81,7 +81,8 @@ Last line check: June 9, 2019
 
 '''
 
-
+# TODO: Line checks
+# TODO: Fix coating handling to be physically meaningful
 
 
 
@@ -1679,9 +1680,30 @@ def aux_goodtest_wav(wav):
     # Outputs True if the wave object is well formed, and False otherwise.                             #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: July 31, 2019                                                                      #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    
+    good = True
+    
+    good &= wav.kvec is None or (type(wav.kvec) is numpy.ndarray 
+                                 and numpy.shape(wav.kvec) == (3,1))
+    
+    good &= wav.efield is None or (type(wav.efield) is numpy.ndarray 
+                                   and numpy.shape(wav.efield) == (3,1))
+    
+    good &= wav.phase is None or isinstance(wav.phase,(int,float,complex))
+    
+    good &= wav.medium is None or (type(wav.medium) is numpy.ndarray 
+                                   and numpy.shape(wav.medium) == (3,3))
+    
+    
+    return good
+        
+    
+    '''
+    
     
     if wav.kvec is None or (type(wav.kvec) is numpy.ndarray 
                                and numpy.shape(wav.kvec) == (3,1)):
@@ -1711,7 +1733,7 @@ def aux_goodtest_wav(wav):
         mtest = False
         
     good = ktest*etest*ptest*mtest
-    return good
+    return good '''
 #
 #
 #
@@ -1737,9 +1759,30 @@ def aux_goodtest_surf(surf):
     # Outputs True if the surface object is well formed, and False otherwise.                          #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    
+    good = True
+    
+    good &= surf.normal is None or (type(surf.normal) is numpy.ndarray 
+                                    and numpy.shape(surf.normal) == (3,1))
+    
+    good &= surf.out is None or (type(surf.out) is numpy.ndarray 
+                                 and numpy.shape(surf.out) == (3,3))
+    
+    good &= surf.into is None or (type(surf.into) is numpy.ndarray 
+                                  and numpy.shape(surf.into) == (3,3))
+    
+    good &= surf.coat is None or surf.coat in ['HR','AR']
+    
+    
+    return good
+    
+    
+    '''
+    
     
     if surf.normal is None or (type(surf.normal) is numpy.ndarray 
                                  and numpy.shape(surf.normal) == (3,1)):
@@ -1767,7 +1810,7 @@ def aux_goodtest_surf(surf):
         ctest = False
             
     good = ntest*otest*itest*ctest
-    return good
+    return good '''
 #
 #
 #
@@ -1793,9 +1836,17 @@ def aux_goodtest_med(med):
     # Outputs True if the medium object is well formed, and False otherwise.                           #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: June 5, 2019                                                                       #
+    # Last Updated: August 7, 2019                                                                     #
     #                                                                                                  #
     ####################################################################################################
+    
+    good = med.epsilon is None or (type(med.epsilon) is numpy.ndarray 
+                                   and numpy.shape(med.epsilon) == (3,3))
+    
+    return good
+
+    
+    '''
     
     if med.epsilon is None or (type(med.epsilon) is numpy.ndarray 
                                   and numpy.shape(med.epsilon) == (3,3)):
@@ -1803,7 +1854,7 @@ def aux_goodtest_med(med):
     else:
         eptest = False
         
-    return eptest
+    return eptest '''
 #
 #
 #
@@ -2156,7 +2207,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Rotates the object in accordance with its transformation properties.                             #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: August 23, 2019                                                                    #
     #                                                                                                  #
     ####################################################################################################
     
@@ -2174,7 +2225,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle wave instances
     #---------------------------------------------------------------------------------------------------
     if isinstance(ob,wavecalc.classes.wave):
-        if not aux_goodtest_wav(ob,test_type='wave'):
+        if not aux_goodtest_wav(ob):
             raise Exception('Your wavecalc wave has improper attributes')
         if medmove in medmove_opts-set([None,'with','only']):
             str1 ="For wavecalc waves, if specified, 'medmove' must be set to one of the following: 'with', 'only'.\n"
@@ -2199,7 +2250,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle surface instances
     #---------------------------------------------------------------------------------------------------
     elif isinstance(ob,wavecalc.classes.surface):
-        if not aux_goodtest_surf(ob,test_type='surface'):
+        if not aux_goodtest_surf(ob):
             raise Exception('Your wavecalc surface has improper attributes')
         if medmove == 'only':
             if ob.out is not None:
@@ -2233,7 +2284,7 @@ def aux_rotate_copy(ob,ang,axis,medmove=None,verbose=None):
     # Handle medium instances
     #---------------------------------------------------------------------------------------------------        
     elif isinstance(ob,wavecalc.classes.medium):
-        if not aux_goodtest_med(ob,test_type='medium'):
+        if not aux_goodtest_med(ob):
             raise Exception('Your wavecalc medium has improper attributes')
         if not medmove is None:
             str1 ="For wavecalc media, 'medmove' option has no meaning. \n"
