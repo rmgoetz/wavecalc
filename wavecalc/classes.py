@@ -150,12 +150,16 @@ class wave:
             
         elif efield is None:
             if type(pol) is str:
+                if isinstance(amp,(int,float)):
+                    multiplier = amp
+                else:
+                    multiplier = 1
                 if pol == 'x':
-                    self.efield = numpy.array([[1.,0.,0.]]).T
+                    self.efield = multiplier*numpy.array([[1.,0.,0.]]).T
                 elif pol == 'y':
-                    self.efield = numpy.array([[0.,1.,0.]]).T
+                    self.efield = multiplier*numpy.array([[0.,1.,0.]]).T
                 elif pol == 'z':
-                    self.efield = numpy.array([[0.,0.,1.]]).T
+                    self.efield = multiplier*numpy.array([[0.,0.,1.]]).T
             elif type(pol) is numpy.ndarray and numpy.shape(pol) == (3,1):
                 sqr_mod = numpy.conj(pol).T @ pol
                 normpol = pol/numpy.sqrt(sqr_mod)
