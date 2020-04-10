@@ -8,7 +8,25 @@ Created on Fri Apr 10 18:48:47 2020
 author: Ryan Goetz, ryan.m.goetz@gmail.com
 last update: April 10, 2020
 """
+'''
+Table of Contents:
 
+    Foreground Functions:
+        
+        crash --------------------------------- Line 33
+        
+        modes --------------------------------- Line 
+        
+        rotate -------------------------------- Line 
+        
+        reflect ------------------------------- Line 
+        
+        transmit ------------------------------ Line 
+
+
+Last line check: 
+
+'''
 
 
 

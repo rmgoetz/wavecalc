@@ -6,13 +6,13 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 
-import wavecalc.functions as fun
-import wavecalc.classes as obj
-import wavecalc.materials
-import wavecalc.composites
+from wavecalc.main_funcs import *
+from wavecalc.classes import *
+import wavecalc.aux_funcs as fun
+import wavecalc.materials as mat
+import wavecalc.composites as comp
 
-str1 = "Importing wavecalc.classes as obj \n"
-str2 = "Importing wavecalc.functions as fun \n"
-str3 = "Working in a development branch of wavecalc"
 
-print(str1+str2+str3)
+str1 = "Working in a development branch of wavecalc"
+
+print(str1)
