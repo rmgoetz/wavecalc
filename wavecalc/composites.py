@@ -2,7 +2,7 @@
 
 import wavecalc
 import numpy
-from wavecalc.functions import aux_rotvec as rotvec
+from wavecalc.aux_funcs import aux_rotvec as rotvec
 #from wavecalc.classes import wave, surface, medium, bundle, chain
 
 
