@@ -107,3 +107,6 @@ venv.bak/
 *.gz
 *.tex
 *.aux
+
+# Windows thumbnail files
+Thumbs.db
