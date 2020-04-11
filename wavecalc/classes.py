@@ -14,16 +14,16 @@ from wavecalc.aux_funcs import aux_fixmode, aux_clean, aux_check_ab
 Created on Mon May 20 23:14:02 2019
 
 @author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: August 1, 2019
+last update: April 10, 2020
 """
 '''
 Table of Contents
 
-    wave Class -------------------------------- Line 114
+    wave Class -------------------------------- Line 116
        
-        __init__ ------------------------------ Line 116
-        pol ----------------------------------- Line 189
-        amp ----------------------------------- Line 212
+        __init__ ------------------------------ Line 118
+        pol ----------------------------------- Line 228
+        amp ----------------------------------- Line 251
         poynting ------------------------------ Line
         rotate -------------------------------- Line
         fixmode ------------------------------- Line
@@ -42,7 +42,7 @@ Table of Contents
         
        
         
-    surface Class ----------------------------- Line 380
+    surface Class ----------------------------- Line 508
     
         __init__ ------------------------------ Line
         rotate -------------------------------- Line
@@ -57,7 +57,7 @@ Table of Contents
         
         
         
-    medium Class ------------------------------ Line 576
+    medium Class ------------------------------ Line 724
 
         __init__ ------------------------------ Line
         epx ----------------------------------- Line
@@ -73,7 +73,7 @@ Table of Contents
 
 
 
-    bundle Class ------------------------------ Line 788
+    bundle Class ------------------------------ Line 941
     
         __init__ ------------------------------ Line
         append -------------------------------- Line
@@ -81,7 +81,7 @@ Table of Contents
         
         
     
-    chain Class ------------------------------- Line
+    chain Class ------------------------------- Line 1010
     
         __init__ ------------------------------ Line
         append -------------------------------- Line
@@ -89,7 +89,7 @@ Table of Contents
         
         
         
-    example_class Class ----------------------- Line 890
+    example_class Class ----------------------- Line 1080
     
         __init__ ------------------------------ Line
         

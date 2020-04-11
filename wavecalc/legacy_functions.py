@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
+
+'''
+
+THIS MODULE IS A LEGACY FROM AN OLDER VERSION OF WAVECALC
+
+IT IS NOT USED BY THE PACKAGE AND WILL BE REMOVED IN A FUTURE UPDATE
+
+
+'''
+
 import numpy
 import wavecalc
 import copy
 '''
 Created May 20, 2019
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: August 1, 2019
+last update: April 10, 2020
 '''
 '''
 Table of Contents:
