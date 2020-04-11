@@ -70,6 +70,7 @@ docs/_build/
 target/
 
 # Jupyter Notebook
+test_notebook_notrack.ipynb # this is a customized decision
 .ipynb_checkpoints
 
 # pyenv
@@ -102,3 +103,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# LaTeX files
+*.gz
+*.tex
+*.aux
+
+# Windows thumbnail files
+Thumbs.db

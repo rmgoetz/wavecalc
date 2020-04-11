@@ -4,12 +4,12 @@ import numpy
 import copy
 from numpy import random
 from collections import UserList
-from wavecalc.functions import aux_rotate_copy as rotate_copy
-from wavecalc.functions import transmit as transmit
-from wavecalc.functions import reflect as reflect
-from wavecalc.functions import crash as crash
-from wavecalc.functions import aux_goodtest as goodtest
-from wavecalc.functions import aux_fixmode, aux_clean, aux_check_ab
+from wavecalc.aux_funcs import aux_rotate_copy as rotate_copy
+from wavecalc.main_funcs import transmit as transmit
+from wavecalc.main_funcs import reflect as reflect
+from wavecalc.main_funcs import crash as crash
+from wavecalc.aux_funcs import aux_goodtest as goodtest
+from wavecalc.aux_funcs import aux_fixmode, aux_clean, aux_check_ab
 """
 Created on Mon May 20 23:14:02 2019
 
