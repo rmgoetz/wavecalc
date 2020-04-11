@@ -70,7 +70,7 @@ docs/_build/
 target/
 
 # Jupyter Notebook
-*notrack.ipynb # this is a customized decision
+test_notebook_notrack.ipynb # this is a customized decision
 .ipynb_checkpoints
 
 # pyenv
