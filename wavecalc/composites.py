@@ -10,7 +10,7 @@ from wavecalc.functions import aux_rotvec as rotvec
 
 class prism:
     
-    def __init__(self,medium = None, wedge = None, everything = None):
+    def __init__(self,medium = None, wedge = None, axis = None, everything = None):
         
         # material attribute
         #-------------------------------------------------------------------------------------
@@ -39,10 +39,23 @@ class prism:
             else:
                 raise Exception("Wedge angle must be an int or a float")
                 
-                
+        # axis attribute        
+        #-------------------------------------------------------------------------------------
+        if axis is False or everything is False:
+            self.axis = None
+        else:
+            if axis in ['x','y','z']:
+                self.axis = axis
+            elif axis is None:
+                self.axis = 'x'
+            else:
+                raise Exception("Axis must be specified as one of 'x', 'y', or 'z'")
+        
+        
+        
         # norm1 and norm2 attributes
         #-------------------------------------------------------------------------------------
-        if wedge is False or everything is False:
+        if wedge is False or axis is False or everything is False:
             self.norm1 = None
             self.norm2 = None
         else:
@@ -51,8 +64,8 @@ class prism:
                 self.norm1 = base
                 self.norm2 = base
             elif isinstance(wedge,(int,float)):
-                self.norm1 = rotvec(base,wedge/2,'x')
-                self.norm2 = rotvec(base,-wedge/2,'x')
+                self.norm1 = rotvec(base,wedge/2,self.axis)
+                self.norm2 = rotvec(base,-wedge/2,self.axis)
             else:
                 raise Exception("Wedge angle must be an int or a float")
             
