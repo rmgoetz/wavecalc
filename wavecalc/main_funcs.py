@@ -182,7 +182,7 @@ def modes(ob,med,**kwargs):
     # Outputs a list of wave modes in the medium parallel to ob.                                       #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: April 29, 2020                                                                     #
     #                                                                                                  #
     ####################################################################################################
 
@@ -217,7 +217,7 @@ def modes(ob,med,**kwargs):
             
     # Handle wavecalc waves for ob input
     #---------------------------------------------------------------------------------------------------
-    if isinstance(ob,wavecalc.classes.wave):
+    elif isinstance(ob,wavecalc.classes.wave):
         if not numpy.shape(ob.kvec)==(3,1):
             raise Exception("If ob is given as a wavecalc wave, ob.kvec must be a numpy.ndarray with shape (3,1")
         elif isinstance(med,wavecalc.classes.medium):

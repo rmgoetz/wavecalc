@@ -877,7 +877,7 @@ def aux_fixmode(wave,ab=None,k0=None,conserve=None,verbose=None):
     # Outputs a list of the new wave vector and electric field.                                        #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: April 29, 2020                                                                     #
     #                                                                                                  #
     ####################################################################################################
     
@@ -948,12 +948,12 @@ def aux_fixmode(wave,ab=None,k0=None,conserve=None,verbose=None):
         mats = aux_coord_transform(new_kvec+efield,new_kvec,verbose=verbose)
         U = mats[0]
         Uinv = mats[1]
-        new_kvec = Uinv @ new_kvec
+        sol_new_kvec = Uinv @ new_kvec
         ef = Uinv @ efield
         new_med = Uinv @ med @ U
         
 
-        out = aux_maxwell_eigenvec(new_kvec,new_med,k0,verbose=verbose,switch=2)
+        out = aux_maxwell_eigenvec(sol_new_kvec,new_med,k0,verbose=verbose,switch=2)
         
         if isinstance(out,list):
             candidate_1 = numpy.conj(out[0]).T
@@ -968,8 +968,6 @@ def aux_fixmode(wave,ab=None,k0=None,conserve=None,verbose=None):
         
         # transform back to lab coordinates
         #-----------------------------------------------------------------------------------------------
-        new_kvec = U @ new_kvec
-        new_kvec = new_kvec.real
         new_efield = U @ new_efield
         if reals[1] and reals[2]:
             new_efield = new_efield.real
