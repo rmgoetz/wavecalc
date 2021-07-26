@@ -35,3 +35,23 @@ def ktp(lamb = None):
     epz = sellmeier1(lamb,4.59423,0.06206,110.80672,0.04763,86.12171)
     ep = numpy.array([[epx,0,0],[0,epy,0],[0,0,epz]])
     return medium(epsilon=ep)
+
+def fs(lamb = None):
+    if lamb is None:
+        lamb = 1.064
+    elif isinstance(lamb,(int,float)):
+        lamb = lamb/1000.
+    else:
+        raise Exception("Wavelength must be specified as an int or a float")
+        
+    '''
+    Source for dispersion relation: I. H. Malitson, 'Interspecimen comparison of the refractive index of fused silica', J. Opt. Soc. Am. 55 (10), 1205 (1965)
+    '''
+    en = 1+(0.6961663*lamb**2)/(lamb**2-0.0684043**2)+(0.4079426*lamb**2)/(lamb**2-0.1162414**2)+(0.8974794*lamb**2)/(lamb**2-9.896161**2)
+    ep = numpy.array([[en,0,0],[0,en,0],[0,0,en]])
+    return medium(epsilon=ep)
+    
+    
+    
+    
+        
