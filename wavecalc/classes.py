@@ -121,6 +121,7 @@ class wave:
         pol = kwargs.pop('pol',None)
         amp = kwargs.pop('amp',None)
         ab = kwargs.pop('ab',None)
+        fix = kwargs.pop('fix',None)
         everything = kwargs.pop('everything',None)
         
         if len(kwargs) != 0:
@@ -136,6 +137,7 @@ class wave:
        
         elif type(kvec) is numpy.ndarray and numpy.shape(kvec) == (3,1):
             self.kvec = kvec
+            fix = False
         
         elif kvec == 'random':
             self.kvec = random.rand(3,1)
@@ -215,11 +217,13 @@ class wave:
     
         elif type(medium) is numpy.ndarray and numpy.shape(medium) == (3,3):
             self.medium = medium
-            self.fixmode(ab=ab)
+            if fix is not False:
+                self.fixmode(ab=ab)
             
         elif medium == 'random':
             self.medium = random.rand(3,3)
-            self.fixmode(ab=ab)
+            if fix is not False:
+                self.fixmode(ab=ab)
             
         else:
             raise Exception("Must specify medium as a (3,3) numpy.ndarray, 'random', False, or None")
