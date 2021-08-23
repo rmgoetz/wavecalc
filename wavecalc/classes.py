@@ -122,6 +122,7 @@ class wave:
         amp = kwargs.pop('amp',None)
         ab = kwargs.pop('ab',None)
         fix = kwargs.pop('fix',None)
+        location = kwargs.pop('location',None)
         everything = kwargs.pop('everything',None)
         
         if len(kwargs) != 0:
@@ -519,6 +520,7 @@ class surface:
         into = kwargs.pop('into',None)
         out = kwargs.pop('out',None)
         coat = kwargs.pop('coat',None)
+        location = kwargs.pop('location',None)
         everything = kwargs.pop('everything',None)
         
         if len(kwargs) != 0:
