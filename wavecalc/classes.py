@@ -145,7 +145,25 @@ class wave:
         
         else:
             raise Exception("Must specify kvec as (3,1) numpy.ndarray, 'random', False, or None")
+            
+            
+        # location attribute
+        #-------------------------------------------------------------------------------------
+        if location is False or everything is False:
+            self.location = None
         
+        elif location is None:
+            self.location = numpy.array([[0.,0.,1.]]).T
+        
+        elif type(location) is numpy.ndarray and numpy.shape(location) == (3,1):
+            self.location = location
+            
+        elif location == 'random':
+            self.location = random.rand(3,1)
+        
+        else:
+            raise Exception('Must specify location as (3,1) numpy.ndarray')
+            
         
         # efield attribute
         #-------------------------------------------------------------------------------------
@@ -544,6 +562,24 @@ class surface:
         
         else:
             raise Exception('Must specify normal as (3,1) numpy.ndarray')
+            
+            
+        # location attribute
+        #-------------------------------------------------------------------------------------
+        if location is False or everything is False:
+            self.location = None
+        
+        elif location is None:
+            self.location = numpy.array([[0.,0.,1.]]).T
+        
+        elif type(location) is numpy.ndarray and numpy.shape(location) == (3,1):
+            self.location = location
+            
+        elif location == 'random':
+            self.location = random.rand(3,1)
+        
+        else:
+            raise Exception('Must specify location as (3,1) numpy.ndarray')
             
         
         
