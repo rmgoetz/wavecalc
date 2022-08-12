@@ -6,7 +6,7 @@ from wavecalc.aux_funcs import *
 """
 Created on Fri Apr 10 18:48:47 2020
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: April 10, 2020
+last update: May 20, 2022
 """
 '''
 Table of Contents:
@@ -288,7 +288,7 @@ def rotate(ob,ang,axis,**kwargs):
     # Returns the rotated object in accordance with its transformation properties.                     #
     #                                                                                                  # 
     #                                                                                                  #
-    # Last Updated: August 1, 2019                                                                     #
+    # Last Updated: May 20, 2022                                                                     #
     #                                                                                                  #
     ####################################################################################################
     
@@ -384,7 +384,7 @@ def rotate(ob,ang,axis,**kwargs):
         if verbose:
             print('New normal :',nn)
             print('New out :',ii)
-            print('New int :',oo)
+            print('New into :',oo)
         return wavecalc.classes.surface(normal=nn,into=ii,out=oo)
     
     
