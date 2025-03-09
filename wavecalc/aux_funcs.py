@@ -4,72 +4,33 @@ import wavecalc
 import copy
 
 """
-Created on Fri Apr 10 18:47:30 2020
 author: Ryan Goetz, ryan.m.goetz@gmail.com
-last update: April 10, 2020
 """
-'''
-Table of Contents:
-
-        aux_booker_interf --------------------- Line 72
-        
-        aux_check_ab -------------------------- Line
-        
-        aux_check_same ------------------------ Line 
-        
-        aux_clean ----------------------------- Line 
-        
-        aux_coat_handle ----------------------- Line 
-        
-        aux_coord_transform ------------------- Line 
-        
-        aux_field_match ----------------------- Line 
-        
-        aux_fixmode --------------------------- Line 
-        
-        aux_goodtest -------------------------- Line 
-        
-        aux_goodtest_wav ---------------------- Line 
-        
-        aux_goodtest_surf --------------------- Line 
-        
-        aux_goodtest_med ---------------------- Line 
-        
-        aux_maxwell_eigenvec ------------------ Line 
-        
-        aux_modecalc -------------------------- Line 
-        
-        aux_quarttest ------------------------- Line 
-        
-        aux_realtest -------------------------- Line 
-        
-        aux_rotate_copy ----------------------- Line 
-        
-        aux_rotmatrix ------------------------- Line 
-        
-        aux_rottens --------------------------- Line 
-
-        aux_rotvec ---------------------------- Line 
-        
-        aux_waveinterf ------------------------ Line 
-           
-        
-    Under Construction:
-        
-        aux_complex_killer -------------------- Line
-        
-        aux_ferrari --------------------------- Line 
-        
-        aux_root_order ------------------------ Line 
 
 
-Last line check: 
-
-'''
 
 # TODO filter out the ComplexWarning for casting complex values to reals
 
 def aux_booker_interf(kx,med1,med2,verbose=None):
+    """A function for solving the Booker equation at a boundary.
+
+    Args:
+        kx: The the x component of normalized input wave vector in solver coordinates, given as a float or int.
+        med1: The incident/reflection medium given as a (3,3) numpy ndarray. Must be given in solver coordinates.
+        med2 (_type_): _description_
+        verbose (_type_, optional): _description_. Defaults to None.
+
+    Raises:
+        Exception: _description_
+        Exception: _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+
+
+
     ''' A behind-the-scenes function for solving the Booker equation at a boundary '''
     
    
